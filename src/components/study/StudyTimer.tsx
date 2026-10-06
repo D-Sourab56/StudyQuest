@@ -12,6 +12,10 @@ import {
 } from "react";
 
 import {
+  useStudyTimer,
+} from "../../context/StudyTimerContext";
+
+import {
   storageService,
 } from "../../services/storageService";
 
@@ -19,14 +23,8 @@ import type {
   StudySubject,
 } from "../../types/subject";
 
-import type {
-  ActiveStudyTimer,
-  CompletedTimerPreview,
-} from "../../types/timer";
-
 import {
   formatElapsedTime,
-  getElapsedMilliseconds,
 } from "../../utils/time";
 
 interface StudyTimerProps {
@@ -36,18 +34,23 @@ interface StudyTimerProps {
 function StudyTimer({
   subjects,
 }: StudyTimerProps) {
-  // =========================================
-  // ACTIVE TIMER
-  // =========================================
-
-  const [
+  const {
     activeTimer,
-    setActiveTimer,
-  ] =
-    useState<ActiveStudyTimer | null>(
-      () =>
-        storageService.getActiveTimer()
-    );
+
+    activeSubject,
+
+    elapsedMs,
+
+    completedSession,
+
+    startTimer,
+
+    pauseTimer,
+
+    resumeTimer,
+
+    finishTimer,
+  } = useStudyTimer();
 
   // =========================================
   // SUBJECT SELECTION
@@ -64,323 +67,67 @@ function StudyTimer({
   );
 
   // =========================================
-  // DISPLAYED TIME
-  // =========================================
-
-  const [
-    elapsedMs,
-    setElapsedMs,
-  ] = useState(
-    () =>
-      activeTimer
-        ? getElapsedMilliseconds(
-            activeTimer
-          )
-        : 0
-  );
-
-  // =========================================
-  // FINISHED TIMER PREVIEW
-  // =========================================
-
-  const [
-    completedTimer,
-    setCompletedTimer,
-  ] =
-    useState<CompletedTimerPreview | null>(
-      null
-    );
-
-  const activeSubject =
-    activeTimer
-      ? subjects.find(
-          (subject) =>
-            subject.id ===
-            activeTimer.subjectId
-        )
-      : undefined;
-
-  const completedSubject =
-    completedTimer
-      ? subjects.find(
-          (subject) =>
-            subject.id ===
-            completedTimer.subjectId
-        )
-      : undefined;
-
-  // =========================================
   // KEEP SUBJECT SELECTION VALID
   // =========================================
 
   useEffect(() => {
+    // While a timer is active, the selector
+    // should stay connected to that subject.
     if (activeTimer) {
+      if (
+        selectedSubjectId !==
+        activeTimer.subjectId
+      ) {
+        setSelectedSubjectId(
+          activeTimer.subjectId
+        );
+      }
+
       return;
     }
 
-    const selectedStillExists =
+    // When there is no active timer,
+    // allow the user to freely select
+    // Java, SQL, or any other subject.
+    const selectedExists =
       subjects.some(
         (subject) =>
           subject.id ===
           selectedSubjectId
       );
 
-    if (!selectedStillExists) {
+    // If the selected subject was deleted,
+    // fall back to the first available subject.
+    if (!selectedExists) {
       setSelectedSubjectId(
         subjects[0]?.id ?? ""
       );
     }
   }, [
     subjects,
+    activeTimer,
     selectedSubjectId,
-    activeTimer,
   ]);
 
   // =========================================
-  // HANDLE BROKEN / DELETED TIMER SUBJECT
+  // COMPLETED SESSION SUBJECT
   // =========================================
 
-  useEffect(() => {
-    if (
-      activeTimer &&
-      !activeSubject
-    ) {
-      storageService.clearActiveTimer();
-
-      setActiveTimer(null);
-
-      setElapsedMs(0);
-    }
-  }, [
-    activeTimer,
-    activeSubject,
-  ]);
-
-  // =========================================
-  // UPDATE TIMER DISPLAY
-  // =========================================
-
-  useEffect(() => {
-    if (!activeTimer) {
-      setElapsedMs(0);
-
-      return;
-    }
-
-    // activeTimer has already been checked,
-    // so this local variable is guaranteed
-    // to be an ActiveStudyTimer.
-    const timer =
-      activeTimer;
-
-    function updateDisplayedTime() {
-      setElapsedMs(
-        getElapsedMilliseconds(
-          timer
-        )
-      );
-    }
-
-    updateDisplayedTime();
-
-    if (
-      timer.status ===
-      "paused"
-    ) {
-      return;
-    }
-
-    const intervalId =
-      window.setInterval(
-        updateDisplayedTime,
-        500
-      );
-
-    return () => {
-      window.clearInterval(
-        intervalId
-      );
-    };
-  }, [activeTimer]);
-
-  // =========================================
-  // START
-  // =========================================
-
-  function handleStart() {
-    if (!selectedSubjectId) {
-      return;
-    }
-
-    const newTimer: ActiveStudyTimer = {
-      subjectId:
-        selectedSubjectId,
-
-      startedAt:
-        new Date().toISOString(),
-
-      status: "running",
-
-      totalPausedMs: 0,
-    };
-
-    storageService.saveActiveTimer(
-      newTimer
-    );
-
-    setActiveTimer(
-      newTimer
-    );
-
-    setCompletedTimer(
-      null
-    );
-
-    setElapsedMs(
-      0
-    );
-  }
-
-  // =========================================
-  // PAUSE
-  // =========================================
-
-  function handlePause() {
-    if (
-      !activeTimer ||
-      activeTimer.status !==
-        "running"
-    ) {
-      return;
-    }
-
-    const pausedTimer: ActiveStudyTimer = {
-      ...activeTimer,
-
-      status: "paused",
-
-      pausedAt:
-        new Date().toISOString(),
-    };
-
-    storageService.saveActiveTimer(
-      pausedTimer
-    );
-
-    setActiveTimer(
-      pausedTimer
-    );
-  }
-
-  // =========================================
-  // RESUME
-  // =========================================
-
-  function handleResume() {
-    if (
-      !activeTimer ||
-      activeTimer.status !==
-        "paused" ||
-      !activeTimer.pausedAt
-    ) {
-      return;
-    }
-
-    const currentTime =
-      Date.now();
-
-    const pausedAt =
-      new Date(
-        activeTimer.pausedAt
-      ).getTime();
-
-    const additionalPausedTime =
-      Number.isNaN(pausedAt)
-        ? 0
-        : Math.max(
-            0,
-            currentTime -
-              pausedAt
-          );
-
-    const resumedTimer: ActiveStudyTimer = {
-      ...activeTimer,
-
-      status: "running",
-
-      totalPausedMs:
-        activeTimer.totalPausedMs +
-        additionalPausedTime,
-
-      pausedAt: undefined,
-    };
-
-    storageService.saveActiveTimer(
-      resumedTimer
-    );
-
-    setActiveTimer(
-      resumedTimer
-    );
-  }
-
-  // =========================================
-  // FINISH
-  // =========================================
-
-  function handleFinish() {
-    if (!activeTimer) {
-      return;
-    }
-
-    const finishedAt =
-      Date.now();
-
-    const durationMs =
-      getElapsedMilliseconds(
-        activeTimer,
-        finishedAt
-      );
-
-    const finishedTimer:
-      CompletedTimerPreview = {
-        subjectId:
-          activeTimer.subjectId,
-
-        startedAt:
-          activeTimer.startedAt,
-
-        endedAt:
-          new Date(
-            finishedAt
-          ).toISOString(),
-
-        durationMs,
-      };
-
-    storageService.clearActiveTimer();
-
-    setCompletedTimer(
-      finishedTimer
-    );
-
-    setSelectedSubjectId(
-      activeTimer.subjectId
-    );
-
-    setActiveTimer(
-      null
-    );
-
-    setElapsedMs(
-      0
-    );
-  }
+  const completedSubject =
+    completedSession
+      ? storageService
+          .getSubjects()
+          .find(
+            (subject) =>
+              subject.id ===
+              completedSession.subjectId
+          )
+      : undefined;
 
   return (
     <section className="panel study-timer-panel">
       {/* ================================= */}
-      {/* ACTIVE SESSION */}
+      {/* ACTIVE TIMER */}
       {/* ================================= */}
 
       {activeTimer &&
@@ -442,7 +189,7 @@ function StudyTimer({
                   type="button"
                   className="secondary-button timer-control-button"
                   onClick={
-                    handlePause
+                    pauseTimer
                   }
                 >
                   <CirclePause
@@ -456,7 +203,7 @@ function StudyTimer({
                   type="button"
                   className="primary-button timer-control-button"
                   onClick={
-                    handleResume
+                    resumeTimer
                   }
                 >
                   <Play
@@ -471,7 +218,7 @@ function StudyTimer({
                 type="button"
                 className="finish-session-button"
                 onClick={
-                  handleFinish
+                  finishTimer
                 }
               >
                 <Square
@@ -521,8 +268,7 @@ function StudyTimer({
                   event
                 ) =>
                   setSelectedSubjectId(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
               >
@@ -536,12 +282,8 @@ function StudyTimer({
                         subject.id
                       }
                     >
-                      {
-                        subject.icon
-                      }{" "}
-                      {
-                        subject.name
-                      }
+                      {subject.icon}{" "}
+                      {subject.name}
                     </option>
                   )
                 )}
@@ -551,11 +293,13 @@ function StudyTimer({
             <button
               type="button"
               className="primary-button start-session-button"
-              onClick={
-                handleStart
-              }
               disabled={
                 !selectedSubjectId
+              }
+              onClick={() =>
+                startTimer(
+                  selectedSubjectId
+                )
               }
             >
               <Play size={18} />
@@ -567,11 +311,11 @@ function StudyTimer({
       )}
 
       {/* ================================= */}
-      {/* FINISHED PREVIEW */}
+      {/* SESSION SAVED */}
       {/* ================================= */}
 
       {!activeTimer &&
-        completedTimer &&
+        completedSession &&
         completedSubject && (
           <div className="timer-complete-preview">
             <div className="timer-complete-icon">
@@ -582,7 +326,7 @@ function StudyTimer({
 
             <div>
               <p>
-                Session finished
+                Session saved
               </p>
 
               <strong>
@@ -591,13 +335,13 @@ function StudyTimer({
                 }
                 {" · "}
                 {formatElapsedTime(
-                  completedTimer.durationMs
+                  completedSession.durationMs
                 )}
               </strong>
 
               <span>
-                Session saving and XP
-                will be added in Step 5.
+                Your study session has
+                been saved successfully.
               </span>
             </div>
           </div>

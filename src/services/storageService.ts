@@ -3,6 +3,10 @@ import {
 } from "../data/storageConfig";
 
 import type {
+  StudySession,
+} from "../types/session";
+
+import type {
   StudySubject,
 } from "../types/subject";
 
@@ -15,6 +19,8 @@ interface StudyQuestData {
 
   subjects: StudySubject[];
 
+  sessions: StudySession[];
+
   activeTimer: ActiveStudyTimer | null;
 }
 
@@ -24,8 +30,14 @@ const DEFAULT_DATA: StudyQuestData = {
 
   subjects: [],
 
+  sessions: [],
+
   activeTimer: null,
 };
+
+// =========================================
+// TIMER VALIDATION
+// =========================================
 
 function isActiveStudyTimer(
   value: unknown
@@ -60,6 +72,43 @@ function isActiveStudyTimer(
   );
 }
 
+// =========================================
+// SESSION VALIDATION
+// =========================================
+
+function isStudySession(
+  value: unknown
+): value is StudySession {
+  if (
+    !value ||
+    typeof value !== "object"
+  ) {
+    return false;
+  }
+
+  const session =
+    value as Partial<StudySession>;
+
+  return (
+    typeof session.id ===
+      "string" &&
+    typeof session.subjectId ===
+      "string" &&
+    typeof session.startedAt ===
+      "string" &&
+    typeof session.endedAt ===
+      "string" &&
+    typeof session.durationMs ===
+      "number" &&
+    typeof session.createdAt ===
+      "string"
+  );
+}
+
+// =========================================
+// READ ALL DATA
+// =========================================
+
 function readData(): StudyQuestData {
   try {
     const savedData =
@@ -90,6 +139,15 @@ function readData(): StudyQuestData {
           ? parsedData.subjects
           : [],
 
+      sessions:
+        Array.isArray(
+          parsedData.sessions
+        )
+          ? parsedData.sessions.filter(
+              isStudySession
+            )
+          : [],
+
       activeTimer:
         isActiveStudyTimer(
           parsedData.activeTimer
@@ -106,6 +164,10 @@ function readData(): StudyQuestData {
     return DEFAULT_DATA;
   }
 }
+
+// =========================================
+// SAVE ALL DATA
+// =========================================
 
 function saveData(
   data: StudyQuestData
@@ -145,6 +207,46 @@ function saveSubjects(
 }
 
 // =========================================
+// STUDY SESSIONS
+// =========================================
+
+function getSessions(): StudySession[] {
+  return readData().sessions;
+}
+
+function saveSessions(
+  sessions: StudySession[]
+): void {
+  const currentData =
+    readData();
+
+  saveData({
+    ...currentData,
+
+    sessions,
+  });
+}
+
+function addSession(
+  session: StudySession
+): void {
+  const currentData =
+    readData();
+
+  const updatedSessions = [
+    ...currentData.sessions,
+    session,
+  ];
+
+  saveData({
+    ...currentData,
+
+    sessions:
+      updatedSessions,
+  });
+}
+
+// =========================================
 // ACTIVE TIMER
 // =========================================
 
@@ -177,10 +279,20 @@ function clearActiveTimer(): void {
   });
 }
 
+// =========================================
+// EXPORT
+// =========================================
+
 export const storageService = {
   getSubjects,
 
   saveSubjects,
+
+  getSessions,
+
+  saveSessions,
+
+  addSession,
 
   getActiveTimer,
 

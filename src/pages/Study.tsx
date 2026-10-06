@@ -5,8 +5,13 @@ import {
 } from "lucide-react";
 
 import {
+  useEffect,
   useState,
 } from "react";
+
+import {
+  useStudyTimer,
+} from "../context/StudyTimerContext";
 
 import StudyTimer from "../components/study/StudyTimer";
 
@@ -23,6 +28,14 @@ import type {
 } from "../types/subject";
 
 function Study() {
+  // =========================================
+  // GLOBAL STUDY TIMER
+  // =========================================
+
+  const {
+    setStudyWorkspaceOpen,
+  } = useStudyTimer();
+
   // =========================================
   // SUBJECT DATA
   // =========================================
@@ -81,6 +94,29 @@ function Study() {
     useState<StudySubject | null>(
       null
     );
+
+  // =========================================
+  // WORKSPACE STATE
+  // =========================================
+
+  const isStudyWorkspaceOpen =
+    showSubjectForm ||
+    selectedSubject !== null;
+
+  useEffect(() => {
+    setStudyWorkspaceOpen(
+      isStudyWorkspaceOpen
+    );
+
+    return () => {
+      setStudyWorkspaceOpen(
+        false
+      );
+    };
+  }, [
+    isStudyWorkspaceOpen,
+    setStudyWorkspaceOpen,
+  ]);
 
   // =========================================
   // FORM HELPERS
@@ -219,10 +255,12 @@ function Study() {
       name: cleanName,
 
       icon:
-        subjectIcon.trim() || "📘",
+        subjectIcon.trim() ||
+        "📘",
 
       category:
-        cleanCategory || undefined,
+        cleanCategory ||
+        undefined,
 
       progress: 0,
 
@@ -342,7 +380,7 @@ function Study() {
   }
 
   // =========================================
-  // OPEN DETAILS
+  // OPEN SUBJECT DETAILS
   // =========================================
 
   function handleOpenSubject(
@@ -403,13 +441,14 @@ function Study() {
       {/* STUDY TIMER */}
       {/* ============================== */}
 
-      {subjects.length > 0 && (
-        <StudyTimer
-          subjects={
-            subjects
-          }
-        />
-      )}
+      {subjects.length > 0 &&
+        !isStudyWorkspaceOpen && (
+          <StudyTimer
+            subjects={
+              subjects
+            }
+          />
+        )}
 
       {/* ============================== */}
       {/* SUBJECT DETAILS */}
@@ -477,6 +516,7 @@ function Study() {
               handleSaveSubject
             }
           >
+            {/* Icon */}
             <div className="form-group subject-icon-field">
               <label htmlFor="subject-icon">
                 Icon
@@ -493,13 +533,13 @@ function Study() {
                   event
                 ) =>
                   setSubjectIcon(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
               />
             </div>
 
+            {/* Subject Name */}
             <div className="form-group">
               <label htmlFor="subject-name">
                 Subject name
@@ -522,8 +562,7 @@ function Study() {
                   event
                 ) => {
                   setSubjectName(
-                    event.target
-                      .value
+                    event.target.value
                   );
 
                   setFormError(
@@ -533,6 +572,7 @@ function Study() {
               />
             </div>
 
+            {/* Category */}
             <div className="form-group">
               <label htmlFor="subject-category">
                 Category
@@ -550,19 +590,20 @@ function Study() {
                   event
                 ) =>
                   setSubjectCategory(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 }
               />
             </div>
 
+            {/* Error */}
             {formError && (
               <p className="form-error">
                 {formError}
               </p>
             )}
 
+            {/* Form Buttons */}
             <div className="subject-form-actions">
               <button
                 type="button"
@@ -645,8 +686,7 @@ function Study() {
             <span className="subject-count">
               {subjects.length}
 
-              {subjects.length ===
-              1
+              {subjects.length === 1
                 ? " subject"
                 : " subjects"}
             </span>
