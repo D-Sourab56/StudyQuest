@@ -7,6 +7,10 @@ import {
 } from "lucide-react";
 
 import {
+  getSubjectInitial,
+} from "../../utils/subject";
+
+import {
   useEffect,
   useState,
 } from "react";
@@ -135,9 +139,11 @@ function StudyTimer({
           <div className="active-timer">
             <div className="timer-top-row">
               <div className="timer-subject-info">
-                <div className="timer-subject-icon">
-                  {activeSubject.icon}
-                </div>
+                <div className="timer-subject-icon subject-letter-icon">
+                      {getSubjectInitial(
+                        activeSubject.name
+                      )}
+                    </div>
 
                 <div>
                   <p className="panel-label">

@@ -5,6 +5,10 @@ import {
   Trash2,
 } from "lucide-react";
 
+import {
+  getSubjectInitial,
+} from "../../utils/subject";
+
 import type {
   StudySubject,
 } from "../../types/subject";
@@ -38,9 +42,11 @@ function SubjectCard({
       {/* ============================== */}
 
       <div className="subject-card-top">
-        <div className="subject-icon">
-          {subject.icon}
-        </div>
+        <div className="subject-icon subject-letter-icon">
+            {getSubjectInitial(
+              subject.name
+            )}
+          </div>
 
         <div className="subject-title-area">
           <h3>

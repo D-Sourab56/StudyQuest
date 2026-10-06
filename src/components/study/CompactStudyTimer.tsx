@@ -5,6 +5,10 @@ import {
 } from "lucide-react";
 
 import {
+  getSubjectInitial,
+} from "../../utils/subject";
+
+import {
   useLocation,
 } from "react-router";
 
@@ -65,8 +69,10 @@ function CompactStudyTimer() {
   return (
     <aside className="compact-study-timer">
       <div className="compact-timer-subject">
-        <div className="compact-timer-icon">
-          {activeSubject.icon}
+        <div className="compact-timer-icon subject-letter-icon">
+            {getSubjectInitial(
+                activeSubject.name
+            )}
         </div>
 
         <div>

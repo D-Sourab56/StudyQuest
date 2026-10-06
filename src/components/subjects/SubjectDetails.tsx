@@ -4,6 +4,10 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  getSubjectInitial,
+} from "../../utils/subject";
+
 import type {
   StudySubject,
 } from "../../types/subject";
@@ -36,9 +40,11 @@ function SubjectDetails({
 
       <div className="subject-details-header">
         <div className="subject-details-main">
-          <div className="subject-details-icon">
-            {subject.icon}
-          </div>
+          <div className="subject-details-icon subject-letter-icon">
+              {getSubjectInitial(
+                subject.name
+              )}
+            </div>
 
           <div>
             <p className="panel-label">

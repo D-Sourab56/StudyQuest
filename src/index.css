@@ -2105,3 +2105,901 @@ a {
     min-width: 0;
   }
 }
+/* ================================================== */
+/* STUDYQUEST — GLASSMORPHISM                         */
+/* ================================================== */
+
+:root {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Segoe UI",
+    sans-serif;
+
+  color: #15201a;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --text-primary: #142019;
+  --text-secondary: #66736b;
+  --text-muted: #87948c;
+
+  --accent: #159b68;
+  --accent-dark: #0c704b;
+
+  --glass:
+    rgba(255, 255, 255, 0.42);
+
+  --glass-strong:
+    rgba(255, 255, 255, 0.58);
+
+  --glass-hover:
+    rgba(255, 255, 255, 0.54);
+
+  --glass-border:
+    rgba(255, 255, 255, 0.72);
+
+  --glass-border-soft:
+    rgba(255, 255, 255, 0.48);
+
+  --glass-shadow:
+    0 18px 45px
+    rgba(31, 55, 43, 0.09);
+
+  --glass-shadow-hover:
+    0 24px 60px
+    rgba(31, 55, 43, 0.13);
+
+  --glass-blur: 28px;
+
+  --spring:
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+}
+
+
+/* ================================================== */
+/* BACKGROUND                                         */
+/* ================================================== */
+
+html {
+  min-height: 100%;
+
+  background:
+    #eaf2ef;
+}
+
+body {
+  position: relative;
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(68, 214, 156, 0.28),
+      transparent 28%
+    ),
+
+    radial-gradient(
+      circle at 82% 12%,
+      rgba(103, 165, 255, 0.24),
+      transparent 31%
+    ),
+
+    radial-gradient(
+      circle at 72% 78%,
+      rgba(95, 225, 187, 0.17),
+      transparent 32%
+    ),
+
+    radial-gradient(
+      circle at 18% 88%,
+      rgba(197, 168, 255, 0.12),
+      transparent 28%
+    ),
+
+    linear-gradient(
+      145deg,
+      #edf7f2 0%,
+      #eef4f8 48%,
+      #edf3ef 100%
+    );
+
+  background-attachment:
+    fixed;
+}
+
+
+/* Decorative background glow */
+
+body::before,
+body::after {
+  content: "";
+
+  position: fixed;
+
+  pointer-events: none;
+
+  border-radius: 999px;
+
+  filter: blur(25px);
+
+  z-index: -1;
+}
+
+body::before {
+  width: 360px;
+  height: 360px;
+
+  top: 8%;
+  left: 18%;
+
+  background:
+    rgba(78, 209, 157, 0.13);
+}
+
+body::after {
+  width: 420px;
+  height: 420px;
+
+  right: 3%;
+  bottom: 4%;
+
+  background:
+    rgba(109, 166, 255, 0.12);
+}
+
+
+/* ================================================== */
+/* MAIN AREA                                          */
+/* ================================================== */
+
+.app-main {
+  position: relative;
+
+  background: transparent;
+}
+
+.page-container {
+  padding-top: 46px;
+}
+
+
+/* ================================================== */
+/* TYPOGRAPHY                                         */
+/* ================================================== */
+
+.page-eyebrow,
+.panel-label,
+.quest-label {
+  color:
+    var(--accent-dark);
+
+  font-weight: 750;
+
+  letter-spacing:
+    0.16em;
+}
+
+.page-header h1 {
+  color:
+    var(--text-primary);
+
+  font-weight: 670;
+
+  letter-spacing:
+    -0.055em;
+
+  line-height: 1.02;
+}
+
+.page-description {
+  color:
+    var(--text-secondary);
+
+  letter-spacing:
+    -0.015em;
+}
+
+
+/* ================================================== */
+/* DARK GLASS SIDEBAR                                 */
+/* ================================================== */
+
+.sidebar {
+  background:
+    rgba(11, 24, 17, 0.76);
+
+  border-right:
+    1px solid
+    rgba(255, 255, 255, 0.10);
+
+  backdrop-filter:
+    blur(34px)
+    saturate(170%);
+
+  -webkit-backdrop-filter:
+    blur(34px)
+    saturate(170%);
+
+  box-shadow:
+    12px 0 45px
+    rgba(13, 28, 20, 0.10);
+}
+
+.brand-icon {
+  background:
+    rgba(42, 194, 132, 0.78);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.20);
+
+  backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.22),
+    0 8px 25px
+    rgba(28, 164, 108, 0.18);
+}
+
+.brand-name {
+  font-weight: 680;
+
+  letter-spacing:
+    -0.03em;
+}
+
+.brand-subtitle {
+  color:
+    rgba(225, 237, 230, 0.55);
+}
+
+
+/* ================================================== */
+/* NAVIGATION                                         */
+/* ================================================== */
+
+.navigation-link {
+  color:
+    rgba(231, 240, 234, 0.62);
+
+  background:
+    transparent;
+
+  border:
+    1px solid transparent;
+
+  border-radius: 14px;
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms var(--spring),
+    color 180ms ease;
+}
+
+.navigation-link:hover {
+  color: #ffffff;
+
+  background:
+    rgba(255, 255, 255, 0.07);
+
+  transform:
+    translateX(3px);
+}
+
+.navigation-link.active {
+  color: #ffffff;
+
+  background:
+    rgba(255, 255, 255, 0.12);
+
+  border-color:
+    rgba(255, 255, 255, 0.10);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.08);
+}
+
+
+/* ================================================== */
+/* SIDEBAR MESSAGE                                    */
+/* ================================================== */
+
+.sidebar-message {
+  background:
+    rgba(255, 255, 255, 0.07);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.11);
+
+  backdrop-filter:
+    blur(20px);
+
+  -webkit-backdrop-filter:
+    blur(20px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.05);
+}
+
+
+/* ================================================== */
+/* TRUE GLASS SURFACES                                */
+/* ================================================== */
+
+.panel,
+.stat-card,
+.subject-card {
+  background:
+    var(--glass);
+
+  border:
+    1px solid
+    var(--glass-border);
+
+  backdrop-filter:
+    blur(var(--glass-blur))
+    saturate(165%);
+
+  -webkit-backdrop-filter:
+    blur(var(--glass-blur))
+    saturate(165%);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.82),
+    var(--glass-shadow);
+
+  border-radius: 24px;
+}
+
+
+/* ================================================== */
+/* STAT CARDS                                         */
+/* ================================================== */
+
+.stat-card {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 240ms
+    var(--spring),
+
+    background 200ms ease,
+
+    box-shadow 240ms ease;
+}
+
+.stat-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 120px;
+  height: 120px;
+
+  top: -70px;
+  right: -50px;
+
+  background:
+    rgba(255, 255, 255, 0.22);
+
+  filter:
+    blur(16px);
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  background:
+    var(--glass-hover);
+
+  transform:
+    translateY(-5px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9),
+    var(--glass-shadow-hover);
+}
+
+.stat-icon {
+  background:
+    rgba(229, 249, 240, 0.58);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.82);
+
+  backdrop-filter:
+    blur(14px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9);
+}
+
+
+/* ================================================== */
+/* WELCOME / LARGE PANEL                              */
+/* ================================================== */
+
+.welcome-panel {
+  overflow: hidden;
+
+  position: relative;
+}
+
+.welcome-panel::before {
+  content: "";
+
+  position: absolute;
+
+  width: 260px;
+  height: 260px;
+
+  left: -90px;
+  bottom: -120px;
+
+  background:
+    rgba(37, 185, 124, 0.13);
+
+  border-radius: 50%;
+
+  filter:
+    blur(20px);
+
+  pointer-events: none;
+}
+
+.welcome-icon {
+  background:
+    rgba(22, 158, 104, 0.82);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.28);
+
+  backdrop-filter:
+    blur(15px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.25),
+
+    0 16px 35px
+    rgba(20, 151, 99, 0.20);
+}
+
+
+/* ================================================== */
+/* SUBJECT CARDS                                      */
+/* ================================================== */
+
+.subject-card {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 240ms
+    var(--spring),
+
+    background 200ms ease,
+
+    box-shadow 240ms ease;
+}
+
+.subject-card:hover {
+  background:
+    var(--glass-hover);
+
+  transform:
+    translateY(-5px)
+    scale(1.004);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.92),
+
+    var(--glass-shadow-hover);
+}
+
+
+/* ================================================== */
+/* SUBJECT LETTER LOGOS                               */
+/* ================================================== */
+
+.subject-letter-icon {
+  color:
+    #0d744e;
+
+  font-weight: 720;
+
+  letter-spacing:
+    -0.05em;
+
+  background:
+    rgba(229, 249, 240, 0.52);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.85);
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9),
+
+    0 8px 22px
+    rgba(36, 130, 89, 0.08);
+}
+
+.subject-icon.subject-letter-icon {
+  font-size: 21px;
+}
+
+.subject-details-icon.subject-letter-icon {
+  font-size: 27px;
+}
+
+.timer-subject-icon.subject-letter-icon {
+  font-size: 23px;
+}
+
+.compact-timer-icon.subject-letter-icon {
+  font-size: 17px;
+}
+
+
+/* ================================================== */
+/* PROGRESS                                           */
+/* ================================================== */
+
+.progress-track {
+  background:
+    rgba(58, 82, 69, 0.07);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.58);
+
+  backdrop-filter:
+    blur(8px);
+}
+
+.progress-fill {
+  background:
+    linear-gradient(
+      90deg,
+      #26b77f,
+      #11925f
+    );
+
+  box-shadow:
+    0 2px 12px
+    rgba(23, 153, 100, 0.25);
+}
+
+
+/* ================================================== */
+/* FORMS                                              */
+/* ================================================== */
+
+.form-group input,
+.timer-subject-select select {
+  background:
+    rgba(255, 255, 255, 0.45);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.82);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  box-shadow:
+    inset 0 1px 2px
+    rgba(27, 50, 37, 0.04);
+
+  border-radius: 14px;
+}
+
+.form-group input:focus,
+.timer-subject-select select:focus {
+  background:
+    rgba(255, 255, 255, 0.62);
+
+  border-color:
+    rgba(33, 173, 116, 0.58);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(32, 174, 116, 0.10),
+
+    inset 0 1px 2px
+    rgba(27, 50, 37, 0.03);
+}
+
+
+/* ================================================== */
+/* BUTTONS                                            */
+/* ================================================== */
+
+.primary-button {
+  background:
+    rgba(14, 31, 21, 0.90);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.10);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.12),
+
+    0 10px 24px
+    rgba(15, 33, 22, 0.16);
+
+  border-radius: 14px;
+
+  transition:
+    transform 180ms
+    var(--spring),
+
+    background 180ms ease,
+
+    box-shadow 180ms ease;
+}
+
+.primary-button:hover {
+  background:
+    rgba(20, 43, 29, 0.95);
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.15),
+
+    0 14px 30px
+    rgba(15, 33, 22, 0.19);
+}
+
+.primary-button:active {
+  transform:
+    scale(0.97);
+}
+
+.secondary-button,
+.icon-button {
+  background:
+    rgba(255, 255, 255, 0.40);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.76);
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.82);
+}
+
+
+/* ================================================== */
+/* TIMER PANEL                                        */
+/* ================================================== */
+
+.study-timer-panel {
+  background:
+    rgba(255, 255, 255, 0.40);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.78);
+
+  backdrop-filter:
+    blur(32px)
+    saturate(170%);
+
+  -webkit-backdrop-filter:
+    blur(32px)
+    saturate(170%);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9),
+
+    0 24px 60px
+    rgba(30, 55, 42, 0.10);
+}
+
+.timer-display {
+  font-weight: 620;
+
+  letter-spacing:
+    -0.065em;
+}
+
+
+/* ================================================== */
+/* GLOBAL COMPACT TIMER                               */
+/* ================================================== */
+
+.compact-study-timer {
+  background:
+    rgba(14, 29, 20, 0.72);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.13);
+
+  backdrop-filter:
+    blur(28px)
+    saturate(175%);
+
+  -webkit-backdrop-filter:
+    blur(28px)
+    saturate(175%);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.10),
+
+    0 22px 55px
+    rgba(10, 25, 16, 0.25);
+
+  border-radius: 18px;
+
+  animation:
+    glassTimerEnter
+    280ms
+    var(--spring);
+}
+
+@keyframes glassTimerEnter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(14px)
+      scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ================================================== */
+/* EMPTY STATES                                       */
+/* ================================================== */
+
+.empty-state-icon {
+  background:
+    rgba(230, 249, 240, 0.52);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.82);
+
+  backdrop-filter:
+    blur(15px);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9);
+}
+
+
+/* ================================================== */
+/* MOBILE                                             */
+/* ================================================== */
+
+.mobile-header {
+  background:
+    rgba(238, 246, 242, 0.58);
+
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.70);
+
+  backdrop-filter:
+    blur(28px)
+    saturate(165%);
+
+  -webkit-backdrop-filter:
+    blur(28px)
+    saturate(165%);
+}
+
+.mobile-navigation {
+  background:
+    rgba(13, 28, 19, 0.74);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+
+  backdrop-filter:
+    blur(28px)
+    saturate(175%);
+
+  -webkit-backdrop-filter:
+    blur(28px)
+    saturate(175%);
+
+  box-shadow:
+    0 20px 55px
+    rgba(10, 23, 16, 0.26);
+}
+
+
+/* ================================================== */
+/* REDUCED MOTION                                     */
+/* ================================================== */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  *,
+  *::before,
+  *::after {
+    transition-duration:
+      0.01ms !important;
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+  }
+}
