@@ -31,6 +31,8 @@ import {
   formatElapsedTime,
 } from "../../utils/time";
 
+import SubjectSelect from "./SubjectSelect";
+
 interface StudyTimerProps {
   subjects: StudySubject[];
 }
@@ -260,40 +262,20 @@ function StudyTimer({
           </div>
 
           <div className="timer-start-controls">
-            <div className="form-group timer-subject-select">
-              <label htmlFor="timer-subject">
+            <div className="timer-subject-select">
+              <label>
                 Subject
               </label>
 
-              <select
-                id="timer-subject"
+              <SubjectSelect
+                subjects={subjects}
                 value={
                   selectedSubjectId
                 }
-                onChange={(
-                  event
-                ) =>
-                  setSelectedSubjectId(
-                    event.target.value
-                  )
+                onChange={
+                  setSelectedSubjectId
                 }
-              >
-                {subjects.map(
-                  (subject) => (
-                    <option
-                      key={
-                        subject.id
-                      }
-                      value={
-                        subject.id
-                      }
-                    >
-                      {subject.icon}{" "}
-                      {subject.name}
-                    </option>
-                  )
-                )}
-              </select>
+              />
             </div>
 
             <button
@@ -336,13 +318,19 @@ function StudyTimer({
               </p>
 
               <strong>
-                {
-                  completedSubject.name
-                }
+                {completedSubject.name}
+
                 {" · "}
+
                 {formatElapsedTime(
                   completedSession.durationMs
                 )}
+
+                {" · +"}
+
+                {completedSession.xpEarned}
+
+                {" XP"}
               </strong>
 
               <span>

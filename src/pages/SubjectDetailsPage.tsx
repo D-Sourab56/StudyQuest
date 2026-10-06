@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Clock3,
   Layers3,
+  Zap,
 } from "lucide-react";
 
 import {
@@ -26,6 +27,10 @@ import {
 import {
   formatElapsedTime,
 } from "../utils/time";
+
+import {
+  getSubjectXP,
+} from "../utils/xp";
 
 function SubjectDetailsPage() {
   const {
@@ -113,6 +118,11 @@ function SubjectDetailsPage() {
         session.durationMs,
       0
     );
+
+    const totalSubjectXp =
+        getSubjectXP(
+            subjectSessions
+        );
 
   const recentSessions =
     subjectSessions.slice(
@@ -247,6 +257,22 @@ function SubjectDetailsPage() {
               %
             </strong>
           </div>
+        </article>
+        
+        <article className="subject-stat-card">
+            <div className="subject-stat-icon">
+                <Zap size={20} />
+            </div>
+
+            <div>
+                <span>
+                XP Earned
+                </span>
+
+                <strong>
+                {totalSubjectXp} XP
+                </strong>
+            </div>
         </article>
       </section>
 

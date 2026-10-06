@@ -15,12 +15,32 @@ import {
   ROUTES,
 } from "../data/appConfig";
 
+import {
+  storageService,
+} from "../services/storageService";
+
+import {
+  getLevelInfo,
+  getTotalXP,
+} from "../utils/xp";
+
 function Dashboard() {
+  const sessions =
+    storageService.getSessions();
+
+  const totalXp =
+    getTotalXP(
+      sessions
+    );
+
+  const levelInfo =
+    getLevelInfo(
+      totalXp
+    );
+
   return (
     <div className="page-container">
-      {/* ============================== */}
-      {/* PAGE HEADER */}
-      {/* ============================== */}
+      {/* HEADER */}
 
       <header className="page-header">
         <div>
@@ -33,20 +53,22 @@ function Dashboard() {
           </h1>
 
           <p className="page-description">
-            Every study session moves your quest forward.
+            Every study session moves
+            your quest forward.
           </p>
         </div>
       </header>
 
-      {/* ============================== */}
-      {/* STATISTICS */}
-      {/* ============================== */}
+      {/* STATS */}
 
       <section className="stats-grid">
-        {/* Today's Study */}
+        {/* TODAY */}
+
         <article className="stat-card">
           <div className="stat-icon">
-            <Clock3 size={20} />
+            <Clock3
+              size={20}
+            />
           </div>
 
           <div>
@@ -59,15 +81,19 @@ function Dashboard() {
             </h2>
 
             <p className="stat-helper">
-              No study yet
+              Daily statistics
+              coming next
             </p>
           </div>
         </article>
 
-        {/* Weekly Goal */}
+        {/* WEEKLY GOAL */}
+
         <article className="stat-card">
           <div className="stat-icon">
-            <Target size={20} />
+            <Target
+              size={20}
+            />
           </div>
 
           <div className="stat-card-content">
@@ -83,38 +109,61 @@ function Dashboard() {
               <div
                 className="progress-fill"
                 style={{
-                  width: "0%",
+                  width:
+                    "0%",
                 }}
               />
             </div>
           </div>
         </article>
 
-        {/* Level */}
+        {/* XP / LEVEL */}
+
         <article className="stat-card">
           <div className="stat-icon">
-            <Zap size={20} />
+            <Zap
+              size={20}
+            />
           </div>
 
           <div className="stat-card-content">
             <p className="stat-label">
-              Level 1
+              Level{" "}
+              {
+                levelInfo.level
+              }
             </p>
 
             <h2>
-              0 XP
+              {totalXp} XP
             </h2>
 
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width:
+                    `${levelInfo.progressPercent}%`,
+                }}
+              />
+            </div>
+
             <p className="stat-helper">
-              100 XP to next level
+              {
+                levelInfo.xpToNextLevel
+              }{" "}
+              XP to next level
             </p>
           </div>
         </article>
 
-        {/* Streak */}
+        {/* STREAK */}
+
         <article className="stat-card">
           <div className="stat-icon">
-            <Flame size={20} />
+            <Flame
+              size={20}
+            />
           </div>
 
           <div>
@@ -127,50 +176,55 @@ function Dashboard() {
             </h2>
 
             <p className="stat-helper">
-              Start your streak today
+              Streak system
+              coming later
             </p>
           </div>
         </article>
       </section>
 
-      {/* ============================== */}
-      {/* DASHBOARD CONTENT */}
-      {/* ============================== */}
+      {/* DASHBOARD */}
 
       <section className="dashboard-grid">
-        {/* First Quest */}
         <article className="panel welcome-panel">
           <div className="welcome-icon">
-            <BookOpen size={27} />
+            <BookOpen
+              size={27}
+            />
           </div>
 
           <div className="welcome-content">
             <span className="quest-label">
-              YOUR FIRST QUEST
+              YOUR QUEST
             </span>
 
             <h2>
-              Start building your learning journey.
+              Keep building your
+              learning journey.
             </h2>
 
             <p>
-              Create a subject, start studying,
-              and StudyQuest will turn your effort
+              Study consistently,
+              earn XP, level up,
+              and turn learning
               into visible progress.
             </p>
 
             <Link
-              to={ROUTES.study}
+              to={
+                ROUTES.study
+              }
               className="primary-button"
             >
               Start studying
 
-              <ArrowRight size={18} />
+              <ArrowRight
+                size={18}
+              />
             </Link>
           </div>
         </article>
 
-        {/* Weekly Activity */}
         <article className="panel">
           <div className="panel-heading">
             <div>
@@ -186,22 +240,24 @@ function Dashboard() {
 
           <div className="empty-state compact">
             <div className="empty-state-icon">
-              <Clock3 size={24} />
+              <Clock3
+                size={24}
+              />
             </div>
 
             <h3>
-              No activity yet
+              Statistics coming
+              soon
             </h3>
 
             <p>
-              Your weekly study activity will
-              appear here after your first
-              session.
+              Your weekly study
+              activity will appear
+              here in a later step.
             </p>
           </div>
         </article>
 
-        {/* Recent Sessions */}
         <article className="panel recent-panel">
           <div className="panel-heading">
             <div>
@@ -217,16 +273,19 @@ function Dashboard() {
 
           <div className="empty-state compact">
             <div className="empty-state-icon">
-              <BookOpen size={24} />
+              <BookOpen
+                size={24}
+              />
             </div>
 
             <h3>
-              No sessions yet
+              History coming
+              soon
             </h3>
 
             <p>
-              Complete your first study session
-              and it will appear here.
+              Your saved sessions
+              will soon appear here.
             </p>
           </div>
         </article>

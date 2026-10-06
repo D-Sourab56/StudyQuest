@@ -10,7 +10,6 @@ import {
 } from "react";
 
 import StudyTimer from "../components/study/StudyTimer";
-
 import SubjectCard from "../components/subjects/SubjectCard";
 
 import {
@@ -41,10 +40,9 @@ function Study() {
   const [
     subjects,
     setSubjects,
-  ] = useState<
-    StudySubject[]
-  >(() =>
-    storageService.getSubjects()
+  ] = useState<StudySubject[]>(
+    () =>
+      storageService.getSubjects()
   );
 
   // =========================================
@@ -74,11 +72,6 @@ function Study() {
   ] = useState("");
 
   const [
-    subjectIcon,
-    setSubjectIcon,
-  ] = useState("📘");
-
-  const [
     formError,
     setFormError,
   ] = useState("");
@@ -96,9 +89,7 @@ function Study() {
     );
 
     return () => {
-      setStudyWorkspaceOpen(
-        false
-      );
+      setStudyWorkspaceOpen(false);
     };
   }, [
     isStudyWorkspaceOpen,
@@ -111,34 +102,19 @@ function Study() {
 
   function resetForm() {
     setSubjectName("");
-
     setSubjectCategory("");
-
-    setSubjectIcon(
-      "📘"
-    );
-
-    setEditingSubjectId(
-      null
-    );
-
+    setEditingSubjectId(null);
     setFormError("");
   }
 
   function openCreateForm() {
     resetForm();
-
-    setShowSubjectForm(
-      true
-    );
+    setShowSubjectForm(true);
   }
 
   function closeForm() {
     resetForm();
-
-    setShowSubjectForm(
-      false
-    );
+    setShowSubjectForm(false);
   }
 
   // =========================================
@@ -168,15 +144,14 @@ function Study() {
     const subjectAlreadyExists =
       subjects.some(
         (subject) =>
-          subject.name.toLowerCase() ===
+          subject.name
+            .toLowerCase() ===
             cleanName.toLowerCase() &&
           subject.id !==
             editingSubjectId
       );
 
-    if (
-      subjectAlreadyExists
-    ) {
+    if (subjectAlreadyExists) {
       setFormError(
         "A subject with this name already exists."
       );
@@ -184,11 +159,11 @@ function Study() {
       return;
     }
 
-    // EDIT
+    // =========================================
+    // EDIT SUBJECT
+    // =========================================
 
-    if (
-      editingSubjectId
-    ) {
+    if (editingSubjectId) {
       const updatedSubjects =
         subjects.map(
           (subject) => {
@@ -208,10 +183,6 @@ function Study() {
               category:
                 cleanCategory ||
                 undefined,
-
-              icon:
-                subjectIcon.trim() ||
-                "📘",
             };
           }
         );
@@ -229,7 +200,9 @@ function Study() {
       return;
     }
 
-    // CREATE
+    // =========================================
+    // CREATE SUBJECT
+    // =========================================
 
     const newSubject:
       StudySubject = {
@@ -238,10 +211,6 @@ function Study() {
 
         name:
           cleanName,
-
-        icon:
-          subjectIcon.trim() ||
-          "📘",
 
         category:
           cleanCategory ||
@@ -253,11 +222,10 @@ function Study() {
           new Date().toISOString(),
       };
 
-    const updatedSubjects =
-      [
-        ...subjects,
-        newSubject,
-      ];
+    const updatedSubjects = [
+      ...subjects,
+      newSubject,
+    ];
 
     setSubjects(
       updatedSubjects
@@ -287,25 +255,16 @@ function Study() {
     );
 
     setSubjectCategory(
-      subject.category ??
-        ""
-    );
-
-    setSubjectIcon(
-      subject.icon
+      subject.category ?? ""
     );
 
     setFormError("");
 
-    setShowSubjectForm(
-      true
-    );
+    setShowSubjectForm(true);
 
     window.scrollTo({
       top: 0,
-
-      behavior:
-        "smooth",
+      behavior: "smooth",
     });
   }
 
@@ -367,7 +326,9 @@ function Study() {
 
   return (
     <div className="page-container">
+      {/* ================================= */}
       {/* HEADER */}
+      {/* ================================= */}
 
       <header className="page-header study-page-header">
         <div>
@@ -387,8 +348,7 @@ function Study() {
           </p>
         </div>
 
-        {subjects.length >
-          0 && (
+        {subjects.length > 0 && (
           <button
             type="button"
             className="primary-button subject-add-button"
@@ -396,19 +356,18 @@ function Study() {
               openCreateForm
             }
           >
-            <Plus
-              size={18}
-            />
+            <Plus size={18} />
 
             Add subject
           </button>
         )}
       </header>
 
+      {/* ================================= */}
       {/* TIMER */}
+      {/* ================================= */}
 
-      {subjects.length >
-        0 &&
+      {subjects.length > 0 &&
         !isStudyWorkspaceOpen && (
           <StudyTimer
             subjects={
@@ -417,7 +376,9 @@ function Study() {
           />
         )}
 
+      {/* ================================= */}
       {/* SUBJECT FORM */}
+      {/* ================================= */}
 
       {showSubjectForm && (
         <section className="panel subject-form-panel">
@@ -450,9 +411,7 @@ function Study() {
               }
               aria-label="Close subject form"
             >
-              <X
-                size={20}
-              />
+              <X size={20} />
             </button>
           </div>
 
@@ -462,37 +421,11 @@ function Study() {
               handleSaveSubject
             }
           >
-            <div className="form-group subject-icon-field">
-              <label htmlFor="subject-icon">
-                Icon
-              </label>
-
-              <input
-                id="subject-icon"
-                type="text"
-                value={
-                  subjectIcon
-                }
-                maxLength={4}
-                onChange={(
-                  event
-                ) =>
-                  setSubjectIcon(
-                    event
-                      .target
-                      .value
-                  )
-                }
-              />
-            </div>
-
             <div className="form-group">
               <label htmlFor="subject-name">
                 Subject name
 
-                <span>
-                  *
-                </span>
+                <span>*</span>
               </label>
 
               <input
@@ -513,9 +446,7 @@ function Study() {
                       .value
                   );
 
-                  setFormError(
-                    ""
-                  );
+                  setFormError("");
                 }}
               />
             </div>
@@ -547,9 +478,7 @@ function Study() {
 
             {formError && (
               <p className="form-error">
-                {
-                  formError
-                }
+                {formError}
               </p>
             )}
 
@@ -577,10 +506,11 @@ function Study() {
         </section>
       )}
 
+      {/* ================================= */}
       {/* EMPTY STATE */}
+      {/* ================================= */}
 
-      {subjects.length ===
-        0 &&
+      {subjects.length === 0 &&
         !showSubjectForm && (
           <section className="panel">
             <div className="empty-state">
@@ -619,59 +549,55 @@ function Study() {
           </section>
         )}
 
+      {/* ================================= */}
       {/* SUBJECT LIST */}
+      {/* ================================= */}
 
-      {subjects.length >
-        0 && (
-          <section className="subjects-section">
-            <div className="section-heading-row">
-              <div>
-                <p className="panel-label">
-                  YOUR SUBJECTS
-                </p>
+      {subjects.length > 0 && (
+        <section className="subjects-section">
+          <div className="section-heading-row">
+            <div>
+              <p className="panel-label">
+                YOUR SUBJECTS
+              </p>
 
-                <h2>
-                  What are you
-                  learning?
-                </h2>
-              </div>
-
-              <span className="subject-count">
-                {
-                  subjects.length
-                }
-
-                {subjects.length ===
-                1
-                  ? " subject"
-                  : " subjects"}
-              </span>
+              <h2>
+                What are you
+                learning?
+              </h2>
             </div>
 
-            <div className="subjects-grid">
-              {subjects.map(
-                (
-                  subject
-                ) => (
-                  <SubjectCard
-                    key={
-                      subject.id
-                    }
-                    subject={
-                      subject
-                    }
-                    onEdit={
-                      handleEditSubject
-                    }
-                    onDelete={
-                      handleDeleteSubject
-                    }
-                  />
-                )
-              )}
-            </div>
-          </section>
-        )}
+            <span className="subject-count">
+              {subjects.length}
+
+              {subjects.length === 1
+                ? " subject"
+                : " subjects"}
+            </span>
+          </div>
+
+          <div className="subjects-grid">
+            {subjects.map(
+              (subject) => (
+                <SubjectCard
+                  key={
+                    subject.id
+                  }
+                  subject={
+                    subject
+                  }
+                  onEdit={
+                    handleEditSubject
+                  }
+                  onDelete={
+                    handleDeleteSubject
+                  }
+                />
+              )
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

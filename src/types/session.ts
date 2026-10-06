@@ -9,5 +9,7 @@ export interface StudySession {
 
   durationMs: number;
 
+  xpEarned: number;
+
   createdAt: string;
 }

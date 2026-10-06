@@ -21,7 +21,8 @@ interface StudyQuestData {
 
   sessions: StudySession[];
 
-  activeTimer: ActiveStudyTimer | null;
+  activeTimer:
+    ActiveStudyTimer | null;
 }
 
 const DEFAULT_DATA: StudyQuestData = {
@@ -36,7 +37,7 @@ const DEFAULT_DATA: StudyQuestData = {
 };
 
 // =========================================
-// TIMER VALIDATION
+// ACTIVE TIMER VALIDATION
 // =========================================
 
 function isActiveStudyTimer(
@@ -73,40 +74,70 @@ function isActiveStudyTimer(
 }
 
 // =========================================
-// SESSION VALIDATION
+// SESSION NORMALIZATION
 // =========================================
 
-function isStudySession(
+function normalizeStudySession(
   value: unknown
-): value is StudySession {
+): StudySession | null {
   if (
     !value ||
     typeof value !== "object"
   ) {
-    return false;
+    return null;
   }
 
   const session =
     value as Partial<StudySession>;
 
-  return (
-    typeof session.id ===
-      "string" &&
-    typeof session.subjectId ===
-      "string" &&
-    typeof session.startedAt ===
-      "string" &&
-    typeof session.endedAt ===
-      "string" &&
-    typeof session.durationMs ===
-      "number" &&
-    typeof session.createdAt ===
+  if (
+    typeof session.id !==
+      "string" ||
+    typeof session.subjectId !==
+      "string" ||
+    typeof session.startedAt !==
+      "string" ||
+    typeof session.endedAt !==
+      "string" ||
+    typeof session.durationMs !==
+      "number" ||
+    typeof session.createdAt !==
       "string"
-  );
+  ) {
+    return null;
+  }
+
+  const xpEarned =
+    typeof session.xpEarned ===
+    "number"
+      ? session.xpEarned
+      : 0;
+
+  return {
+    id:
+      session.id,
+
+    subjectId:
+      session.subjectId,
+
+    startedAt:
+      session.startedAt,
+
+    endedAt:
+      session.endedAt,
+
+    durationMs:
+      session.durationMs,
+
+    xpEarned,
+
+    createdAt:
+      session.createdAt,
+  };
 }
 
 // =========================================
-// READ ALL DATA
+// READ DATA
 // =========================================
 
 function readData(): StudyQuestData {
@@ -125,6 +156,22 @@ function readData(): StudyQuestData {
         savedData
       ) as Partial<StudyQuestData>;
 
+    const sessions =
+      Array.isArray(
+        parsedData.sessions
+      )
+        ? parsedData.sessions
+            .map(
+              normalizeStudySession
+            )
+            .filter(
+              (
+                session
+              ): session is StudySession =>
+                session !== null
+            )
+        : [];
+
     return {
       version:
         typeof parsedData.version ===
@@ -139,14 +186,7 @@ function readData(): StudyQuestData {
           ? parsedData.subjects
           : [],
 
-      sessions:
-        Array.isArray(
-          parsedData.sessions
-        )
-          ? parsedData.sessions.filter(
-              isStudySession
-            )
-          : [],
+      sessions,
 
       activeTimer:
         isActiveStudyTimer(
@@ -166,7 +206,7 @@ function readData(): StudyQuestData {
 }
 
 // =========================================
-// SAVE ALL DATA
+// SAVE DATA
 // =========================================
 
 function saveData(
@@ -189,7 +229,8 @@ function saveData(
 // SUBJECTS
 // =========================================
 
-function getSubjects(): StudySubject[] {
+function getSubjects():
+  StudySubject[] {
   return readData().subjects;
 }
 
@@ -207,10 +248,11 @@ function saveSubjects(
 }
 
 // =========================================
-// STUDY SESSIONS
+// SESSIONS
 // =========================================
 
-function getSessions(): StudySession[] {
+function getSessions():
+  StudySession[] {
   return readData().sessions;
 }
 
@@ -233,16 +275,13 @@ function addSession(
   const currentData =
     readData();
 
-  const updatedSessions = [
-    ...currentData.sessions,
-    session,
-  ];
-
   saveData({
     ...currentData,
 
-    sessions:
-      updatedSessions,
+    sessions: [
+      ...currentData.sessions,
+      session,
+    ],
   });
 }
 
@@ -264,18 +303,21 @@ function saveActiveTimer(
   saveData({
     ...currentData,
 
-    activeTimer: timer,
+    activeTimer:
+      timer,
   });
 }
 
-function clearActiveTimer(): void {
+function clearActiveTimer():
+  void {
   const currentData =
     readData();
 
   saveData({
     ...currentData,
 
-    activeTimer: null,
+    activeTimer:
+      null,
   });
 }
 

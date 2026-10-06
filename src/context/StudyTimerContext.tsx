@@ -25,6 +25,10 @@ import {
   getElapsedMilliseconds,
 } from "../utils/time";
 
+import {
+  calculateSessionXPGain,
+} from "../utils/xp";
+
 interface StudyTimerContextValue {
   activeTimer: ActiveStudyTimer | null;
 
@@ -335,7 +339,16 @@ export function StudyTimerProvider({
         activeTimer,
         finishedAt
       );
+      const existingSessions =
+        storageService.getSessions();
 
+        const xpEarned =
+        calculateSessionXPGain(
+            existingSessions,
+            activeTimer.subjectId,
+            durationMs
+        );
+        
     const session:
       StudySession = {
         id: crypto.randomUUID(),
@@ -352,6 +365,8 @@ export function StudyTimerProvider({
           ).toISOString(),
 
         durationMs,
+
+        xpEarned,
 
         createdAt:
           new Date().toISOString(),
