@@ -8,6 +8,8 @@ import {
   useState,
 } from "react";
 
+import StudyTimer from "../components/study/StudyTimer";
+
 import SubjectCard from "../components/subjects/SubjectCard";
 
 import SubjectDetails from "../components/subjects/SubjectDetails";
@@ -286,6 +288,20 @@ function Study() {
   function handleDeleteSubject(
     subject: StudySubject
   ) {
+    const activeTimer =
+      storageService.getActiveTimer();
+
+    if (
+      activeTimer?.subjectId ===
+      subject.id
+    ) {
+      window.alert(
+        `You are currently studying "${subject.name}". Finish the active study session before deleting this subject.`
+      );
+
+      return;
+    }
+
     const confirmed =
       window.confirm(
         `Delete "${subject.name}"?\n\nThis subject will be permanently removed.`
@@ -384,6 +400,18 @@ function Study() {
       </header>
 
       {/* ============================== */}
+      {/* STUDY TIMER */}
+      {/* ============================== */}
+
+      {subjects.length > 0 && (
+        <StudyTimer
+          subjects={
+            subjects
+          }
+        />
+      )}
+
+      {/* ============================== */}
       {/* SUBJECT DETAILS */}
       {/* ============================== */}
 
@@ -449,7 +477,6 @@ function Study() {
               handleSaveSubject
             }
           >
-            {/* Icon */}
             <div className="form-group subject-icon-field">
               <label htmlFor="subject-icon">
                 Icon
@@ -473,7 +500,6 @@ function Study() {
               />
             </div>
 
-            {/* Name */}
             <div className="form-group">
               <label htmlFor="subject-name">
                 Subject name
@@ -507,7 +533,6 @@ function Study() {
               />
             </div>
 
-            {/* Category */}
             <div className="form-group">
               <label htmlFor="subject-category">
                 Category
@@ -532,14 +557,12 @@ function Study() {
               />
             </div>
 
-            {/* Error */}
             {formError && (
               <p className="form-error">
                 {formError}
               </p>
             )}
 
-            {/* Buttons */}
             <div className="subject-form-actions">
               <button
                 type="button"

@@ -6,7 +6,13 @@ import {
 import {
   NavLink,
   Outlet,
+  useNavigate,
 } from "react-router";
+
+import {
+  useEffect,
+  useRef,
+} from "react";
 
 import {
   APP_NAME,
@@ -16,6 +22,42 @@ import {
 } from "../../data/appConfig";
 
 function AppLayout() {
+  const navigate = useNavigate();
+
+  // =========================================
+  // RETURN TO DASHBOARD AFTER REFRESH
+  // =========================================
+
+  const hasCheckedRefresh = useRef(false);
+
+  useEffect(() => {
+    // Only check the refresh once after the app loads.
+    // Without this guard, React Router navigation could
+    // keep sending the user back to Dashboard.
+    if (hasCheckedRefresh.current) {
+      return;
+    }
+
+    hasCheckedRefresh.current = true;
+
+    const navigationEntry =
+      performance.getEntriesByType(
+        "navigation"
+      )[0] as PerformanceNavigationTiming | undefined;
+
+    const wasPageRefreshed =
+      navigationEntry?.type === "reload";
+
+    if (wasPageRefreshed) {
+      navigate(
+        ROUTES.dashboard,
+        {
+          replace: true,
+        }
+      );
+    }
+  }, [navigate]);
+
   return (
     <div className="app-shell">
       {/* ============================== */}
@@ -49,10 +91,15 @@ function AppLayout() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                end={item.path === ROUTES.dashboard}
+                end={
+                  item.path ===
+                  ROUTES.dashboard
+                }
                 className={({ isActive }) =>
                   `navigation-link ${
-                    isActive ? "active" : ""
+                    isActive
+                      ? "active"
+                      : ""
                   }`
                 }
               >
@@ -66,7 +113,7 @@ function AppLayout() {
           })}
         </nav>
 
-        {/* Bottom message */}
+        {/* Bottom Message */}
         <div className="sidebar-message">
           <Sparkles size={20} />
 
@@ -76,7 +123,8 @@ function AppLayout() {
             </strong>
 
             <p>
-              Small study sessions become real skills.
+              Small study sessions become
+              real skills.
             </p>
           </div>
         </div>
@@ -116,10 +164,15 @@ function AppLayout() {
             <NavLink
               key={item.path}
               to={item.path}
-              end={item.path === ROUTES.dashboard}
+              end={
+                item.path ===
+                ROUTES.dashboard
+              }
               className={({ isActive }) =>
                 `mobile-navigation-link ${
-                  isActive ? "active" : ""
+                  isActive
+                    ? "active"
+                    : ""
                 }`
               }
             >
