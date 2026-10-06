@@ -9,15 +9,13 @@ import {
   useState,
 } from "react";
 
-import {
-  useStudyTimer,
-} from "../context/StudyTimerContext";
-
 import StudyTimer from "../components/study/StudyTimer";
 
 import SubjectCard from "../components/subjects/SubjectCard";
 
-import SubjectDetails from "../components/subjects/SubjectDetails";
+import {
+  useStudyTimer,
+} from "../context/StudyTimerContext";
 
 import {
   storageService,
@@ -43,7 +41,9 @@ function Study() {
   const [
     subjects,
     setSubjects,
-  ] = useState<StudySubject[]>(() =>
+  ] = useState<
+    StudySubject[]
+  >(() =>
     storageService.getSubjects()
   );
 
@@ -59,9 +59,9 @@ function Study() {
   const [
     editingSubjectId,
     setEditingSubjectId,
-  ] = useState<string | null>(
-    null
-  );
+  ] = useState<
+    string | null
+  >(null);
 
   const [
     subjectName,
@@ -84,24 +84,11 @@ function Study() {
   ] = useState("");
 
   // =========================================
-  // SUBJECT DETAILS
-  // =========================================
-
-  const [
-    selectedSubject,
-    setSelectedSubject,
-  ] =
-    useState<StudySubject | null>(
-      null
-    );
-
-  // =========================================
-  // WORKSPACE STATE
+  // WORKSPACE
   // =========================================
 
   const isStudyWorkspaceOpen =
-    showSubjectForm ||
-    selectedSubject !== null;
+    showSubjectForm;
 
   useEffect(() => {
     setStudyWorkspaceOpen(
@@ -127,9 +114,13 @@ function Study() {
 
     setSubjectCategory("");
 
-    setSubjectIcon("📘");
+    setSubjectIcon(
+      "📘"
+    );
 
-    setEditingSubjectId(null);
+    setEditingSubjectId(
+      null
+    );
 
     setFormError("");
   }
@@ -137,23 +128,26 @@ function Study() {
   function openCreateForm() {
     resetForm();
 
-    setSelectedSubject(null);
-
-    setShowSubjectForm(true);
+    setShowSubjectForm(
+      true
+    );
   }
 
   function closeForm() {
     resetForm();
 
-    setShowSubjectForm(false);
+    setShowSubjectForm(
+      false
+    );
   }
 
   // =========================================
-  // CREATE / UPDATE SUBJECT
+  // SAVE SUBJECT
   // =========================================
 
   function handleSaveSubject(
-    event: React.FormEvent<HTMLFormElement>
+    event:
+      React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
@@ -180,7 +174,9 @@ function Study() {
             editingSubjectId
       );
 
-    if (subjectAlreadyExists) {
+    if (
+      subjectAlreadyExists
+    ) {
       setFormError(
         "A subject with this name already exists."
       );
@@ -188,11 +184,11 @@ function Study() {
       return;
     }
 
-    // =========================================
-    // EDIT EXISTING SUBJECT
-    // =========================================
+    // EDIT
 
-    if (editingSubjectId) {
+    if (
+      editingSubjectId
+    ) {
       const updatedSubjects =
         subjects.map(
           (subject) => {
@@ -206,7 +202,8 @@ function Study() {
             return {
               ...subject,
 
-              name: cleanName,
+              name:
+                cleanName,
 
               category:
                 cleanCategory ||
@@ -227,51 +224,40 @@ function Study() {
         updatedSubjects
       );
 
-      const updatedSubject =
-        updatedSubjects.find(
-          (subject) =>
-            subject.id ===
-            editingSubjectId
-        );
-
-      if (updatedSubject) {
-        setSelectedSubject(
-          updatedSubject
-        );
-      }
-
       closeForm();
 
       return;
     }
 
-    // =========================================
-    // CREATE NEW SUBJECT
-    // =========================================
+    // CREATE
 
-    const newSubject: StudySubject = {
-      id: crypto.randomUUID(),
+    const newSubject:
+      StudySubject = {
+        id:
+          crypto.randomUUID(),
 
-      name: cleanName,
+        name:
+          cleanName,
 
-      icon:
-        subjectIcon.trim() ||
-        "📘",
+        icon:
+          subjectIcon.trim() ||
+          "📘",
 
-      category:
-        cleanCategory ||
-        undefined,
+        category:
+          cleanCategory ||
+          undefined,
 
-      progress: 0,
+        progress: 0,
 
-      createdAt:
-        new Date().toISOString(),
-    };
+        createdAt:
+          new Date().toISOString(),
+      };
 
-    const updatedSubjects = [
-      ...subjects,
-      newSubject,
-    ];
+    const updatedSubjects =
+      [
+        ...subjects,
+        newSubject,
+      ];
 
     setSubjects(
       updatedSubjects
@@ -285,11 +271,12 @@ function Study() {
   }
 
   // =========================================
-  // EDIT SUBJECT
+  // EDIT
   // =========================================
 
   function handleEditSubject(
-    subject: StudySubject
+    subject:
+      StudySubject
   ) {
     setEditingSubjectId(
       subject.id
@@ -300,31 +287,35 @@ function Study() {
     );
 
     setSubjectCategory(
-      subject.category ?? ""
+      subject.category ??
+        ""
     );
 
     setSubjectIcon(
       subject.icon
     );
 
-    setSelectedSubject(null);
-
     setFormError("");
 
-    setShowSubjectForm(true);
+    setShowSubjectForm(
+      true
+    );
 
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+
+      behavior:
+        "smooth",
     });
   }
 
   // =========================================
-  // DELETE SUBJECT
+  // DELETE
   // =========================================
 
   function handleDeleteSubject(
-    subject: StudySubject
+    subject:
+      StudySubject
   ) {
     const activeTimer =
       storageService.getActiveTimer();
@@ -351,7 +342,9 @@ function Study() {
 
     const updatedSubjects =
       subjects.filter(
-        (currentSubject) =>
+        (
+          currentSubject
+        ) =>
           currentSubject.id !==
           subject.id
       );
@@ -365,13 +358,6 @@ function Study() {
     );
 
     if (
-      selectedSubject?.id ===
-      subject.id
-    ) {
-      setSelectedSubject(null);
-    }
-
-    if (
       editingSubjectId ===
       subject.id
     ) {
@@ -379,32 +365,9 @@ function Study() {
     }
   }
 
-  // =========================================
-  // OPEN SUBJECT DETAILS
-  // =========================================
-
-  function handleOpenSubject(
-    subject: StudySubject
-  ) {
-    setSelectedSubject(
-      subject
-    );
-
-    setShowSubjectForm(false);
-
-    resetForm();
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
   return (
     <div className="page-container">
-      {/* ============================== */}
       {/* HEADER */}
-      {/* ============================== */}
 
       <header className="page-header study-page-header">
         <div>
@@ -417,12 +380,15 @@ function Study() {
           </h1>
 
           <p className="page-description">
-            Choose what you want to learn and begin
-            building visible progress.
+            Choose what you want
+            to learn and begin
+            building visible
+            progress.
           </p>
         </div>
 
-        {subjects.length > 0 && (
+        {subjects.length >
+          0 && (
           <button
             type="button"
             className="primary-button subject-add-button"
@@ -430,18 +396,19 @@ function Study() {
               openCreateForm
             }
           >
-            <Plus size={18} />
+            <Plus
+              size={18}
+            />
 
             Add subject
           </button>
         )}
       </header>
 
-      {/* ============================== */}
-      {/* STUDY TIMER */}
-      {/* ============================== */}
+      {/* TIMER */}
 
-      {subjects.length > 0 &&
+      {subjects.length >
+        0 &&
         !isStudyWorkspaceOpen && (
           <StudyTimer
             subjects={
@@ -450,30 +417,7 @@ function Study() {
           />
         )}
 
-      {/* ============================== */}
-      {/* SUBJECT DETAILS */}
-      {/* ============================== */}
-
-      {selectedSubject &&
-        !showSubjectForm && (
-          <SubjectDetails
-            subject={
-              selectedSubject
-            }
-            onClose={() =>
-              setSelectedSubject(
-                null
-              )
-            }
-            onEdit={
-              handleEditSubject
-            }
-          />
-        )}
-
-      {/* ============================== */}
       {/* SUBJECT FORM */}
-      {/* ============================== */}
 
       {showSubjectForm && (
         <section className="panel subject-form-panel">
@@ -506,7 +450,9 @@ function Study() {
               }
               aria-label="Close subject form"
             >
-              <X size={20} />
+              <X
+                size={20}
+              />
             </button>
           </div>
 
@@ -516,7 +462,6 @@ function Study() {
               handleSaveSubject
             }
           >
-            {/* Icon */}
             <div className="form-group subject-icon-field">
               <label htmlFor="subject-icon">
                 Icon
@@ -533,13 +478,14 @@ function Study() {
                   event
                 ) =>
                   setSubjectIcon(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   )
                 }
               />
             </div>
 
-            {/* Subject Name */}
             <div className="form-group">
               <label htmlFor="subject-name">
                 Subject name
@@ -562,7 +508,9 @@ function Study() {
                   event
                 ) => {
                   setSubjectName(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   );
 
                   setFormError(
@@ -572,7 +520,6 @@ function Study() {
               />
             </div>
 
-            {/* Category */}
             <div className="form-group">
               <label htmlFor="subject-category">
                 Category
@@ -590,20 +537,22 @@ function Study() {
                   event
                 ) =>
                   setSubjectCategory(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   )
                 }
               />
             </div>
 
-            {/* Error */}
             {formError && (
               <p className="form-error">
-                {formError}
+                {
+                  formError
+                }
               </p>
             )}
 
-            {/* Form Buttons */}
             <div className="subject-form-actions">
               <button
                 type="button"
@@ -628,27 +577,29 @@ function Study() {
         </section>
       )}
 
-      {/* ============================== */}
       {/* EMPTY STATE */}
-      {/* ============================== */}
 
-      {subjects.length === 0 &&
+      {subjects.length ===
+        0 &&
         !showSubjectForm && (
           <section className="panel">
             <div className="empty-state">
               <div className="empty-state-icon large">
-                <BookOpen size={30} />
+                <BookOpen
+                  size={30}
+                />
               </div>
 
               <h2>
-                Create your first subject.
+                Create your first
+                subject.
               </h2>
 
               <p>
-                Subjects help StudyQuest understand
-                what you are learning. Start with
-                something like Java, SQL, English,
-                or Networking.
+                Subjects help
+                StudyQuest
+                understand what
+                you are learning.
               </p>
 
               <button
@@ -658,7 +609,9 @@ function Study() {
                   openCreateForm
                 }
               >
-                <Plus size={18} />
+                <Plus
+                  size={18}
+                />
 
                 Create subject
               </button>
@@ -666,57 +619,59 @@ function Study() {
           </section>
         )}
 
-      {/* ============================== */}
       {/* SUBJECT LIST */}
-      {/* ============================== */}
 
-      {subjects.length > 0 && (
-        <section className="subjects-section">
-          <div className="section-heading-row">
-            <div>
-              <p className="panel-label">
-                YOUR SUBJECTS
-              </p>
+      {subjects.length >
+        0 && (
+          <section className="subjects-section">
+            <div className="section-heading-row">
+              <div>
+                <p className="panel-label">
+                  YOUR SUBJECTS
+                </p>
 
-              <h2>
-                What are you learning?
-              </h2>
+                <h2>
+                  What are you
+                  learning?
+                </h2>
+              </div>
+
+              <span className="subject-count">
+                {
+                  subjects.length
+                }
+
+                {subjects.length ===
+                1
+                  ? " subject"
+                  : " subjects"}
+              </span>
             </div>
 
-            <span className="subject-count">
-              {subjects.length}
-
-              {subjects.length === 1
-                ? " subject"
-                : " subjects"}
-            </span>
-          </div>
-
-          <div className="subjects-grid">
-            {subjects.map(
-              (subject) => (
-                <SubjectCard
-                  key={
-                    subject.id
-                  }
-                  subject={
-                    subject
-                  }
-                  onOpen={
-                    handleOpenSubject
-                  }
-                  onEdit={
-                    handleEditSubject
-                  }
-                  onDelete={
-                    handleDeleteSubject
-                  }
-                />
-              )
-            )}
-          </div>
-        </section>
-      )}
+            <div className="subjects-grid">
+              {subjects.map(
+                (
+                  subject
+                ) => (
+                  <SubjectCard
+                    key={
+                      subject.id
+                    }
+                    subject={
+                      subject
+                    }
+                    onEdit={
+                      handleEditSubject
+                    }
+                    onDelete={
+                      handleDeleteSubject
+                    }
+                  />
+                )
+              )}
+            </div>
+          </section>
+        )}
     </div>
   );
 }

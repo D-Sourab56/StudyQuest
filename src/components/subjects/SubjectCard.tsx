@@ -1,52 +1,55 @@
 import {
-  ArrowRight,
   BookOpen,
   Pencil,
   Trash2,
 } from "lucide-react";
 
 import {
-  getSubjectInitial,
-} from "../../utils/subject";
+  Link,
+} from "react-router";
+
+import {
+  getSubjectRoute,
+} from "../../data/appConfig";
 
 import type {
   StudySubject,
 } from "../../types/subject";
 
-interface SubjectCardProps {
-  subject: StudySubject;
+import {
+  getSubjectInitial,
+} from "../../utils/subject";
 
-  onOpen: (
-    subject: StudySubject
-  ) => void;
+interface SubjectCardProps {
+  subject:
+    StudySubject;
 
   onEdit: (
-    subject: StudySubject
+    subject:
+      StudySubject
   ) => void;
 
   onDelete: (
-    subject: StudySubject
+    subject:
+      StudySubject
   ) => void;
 }
 
 function SubjectCard({
   subject,
-  onOpen,
   onEdit,
   onDelete,
 }: SubjectCardProps) {
   return (
     <article className="subject-card">
-      {/* ============================== */}
       {/* SUBJECT INFO */}
-      {/* ============================== */}
 
       <div className="subject-card-top">
         <div className="subject-icon subject-letter-icon">
-            {getSubjectInitial(
-              subject.name
-            )}
-          </div>
+          {getSubjectInitial(
+            subject.name
+          )}
+        </div>
 
         <div className="subject-title-area">
           <h3>
@@ -55,15 +58,15 @@ function SubjectCard({
 
           {subject.category && (
             <span className="subject-category">
-              {subject.category}
+              {
+                subject.category
+              }
             </span>
           )}
         </div>
       </div>
 
-      {/* ============================== */}
       {/* PROGRESS */}
-      {/* ============================== */}
 
       <div className="subject-progress-area">
         <div className="subject-progress-header">
@@ -72,7 +75,10 @@ function SubjectCard({
           </span>
 
           <strong>
-            {subject.progress}%
+            {
+              subject.progress
+            }
+            %
           </strong>
         </div>
 
@@ -80,19 +86,20 @@ function SubjectCard({
           <div
             className="progress-fill"
             style={{
-              width: `${subject.progress}%`,
+              width:
+                `${subject.progress}%`,
             }}
           />
         </div>
       </div>
 
-      {/* ============================== */}
       {/* FOOTER */}
-      {/* ============================== */}
 
       <div className="subject-card-footer">
         <div className="subject-ready">
-          <BookOpen size={16} />
+          <BookOpen
+            size={16}
+          />
 
           <span>
             Ready to study
@@ -104,43 +111,52 @@ function SubjectCard({
             type="button"
             className="subject-action-button"
             onClick={() =>
-              onEdit(subject)
+              onEdit(
+                subject
+              )
             }
             aria-label={`Edit ${subject.name}`}
             title="Edit subject"
           >
-            <Pencil size={16} />
+            <Pencil
+              size={16}
+            />
           </button>
 
           <button
             type="button"
             className="subject-action-button danger"
             onClick={() =>
-              onDelete(subject)
+              onDelete(
+                subject
+              )
             }
             aria-label={`Delete ${subject.name}`}
             title="Delete subject"
           >
-            <Trash2 size={16} />
+            <Trash2
+              size={16}
+            />
           </button>
         </div>
       </div>
 
-      {/* ============================== */}
-      {/* OPEN DETAILS */}
-      {/* ============================== */}
+      {/* DETAILS PAGE */}
 
-      <button
-        type="button"
-        className="subject-open-button"
-        onClick={() =>
-          onOpen(subject)
+      <Link
+        to={
+          getSubjectRoute(
+            subject.id
+          )
         }
+        className="subject-open-button"
       >
         View subject
 
-        <ArrowRight size={16} />
-      </button>
+        <span>
+          →
+        </span>
+      </Link>
     </article>
   );
 }
