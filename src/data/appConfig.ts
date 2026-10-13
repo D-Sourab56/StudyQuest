@@ -1,3 +1,4 @@
+
 import {
   Award,
   History,
@@ -7,18 +8,23 @@ import {
   Waypoints,
 } from "lucide-react";
 
-import type {
-  LucideIcon,
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-export const APP_NAME =
-  "StudyQuest";
+// =========================================
+// APP INFORMATION
+// =========================================
+
+export const APP_NAME = "StudyQuest";
 
 export const APP_TAGLINE =
   "Level up your knowledge";
 
 export const APP_DESCRIPTION =
   "Turn learning into progress you can see.";
+
+// =========================================
+// ROUTES
+// =========================================
 
 export const ROUTES = {
   dashboard: "/",
@@ -29,101 +35,86 @@ export const ROUTES = {
 
   history: "/history",
 
-  achievements:
-    "/achievements",
+  achievements: "/achievements",
 
   settings: "/settings",
 
-  subjectDetails:
-    "/subjects/:subjectId",
+  subjectDetails: "/study/subject/:subjectName",
 
-  subjectSummaries: "/subjects/:subjectId/summaries",
+  subjectSummaries:
+    "/study/subject/:subjectName/summaries",
 
-  subjectSkills: "/subjects/:subjectId/skills",
+  subjectSkills:
+    "/study/subject/:subjectName/skills",
 } as const;
 
-  export function getSubjectSummariesRoute(subjectId: string): string {
-    return `/subjects/${subjectId}/summaries`;
-  }
-
-  export function getSubjectSkillsRoute(subjectId: string): string {
-    return `/subjects/${subjectId}/skills`;
-  }
+// =========================================
+// SUBJECT ROUTE HELPERS
+// =========================================
 
 export function getSubjectRoute(
-  subjectId: string
+  subjectName: string
 ): string {
-  return `/subjects/${subjectId}`;
+  return `/study/subject/${encodeURIComponent(
+    subjectName
+  )}`;
 }
+
+export function getSubjectSummariesRoute(
+  subjectName: string
+): string {
+  return `${getSubjectRoute(subjectName)}/summaries`;
+}
+
+export function getSubjectSkillsRoute(
+  subjectName: string
+): string {
+  return `${getSubjectRoute(subjectName)}/skills`;
+}
+
+// =========================================
+// NAVIGATION TYPES
+// =========================================
 
 export interface NavigationItem {
   label: string;
-
   path: string;
-
   icon: LucideIcon;
 }
 
-export const NAVIGATION_ITEMS:
-  NavigationItem[] = [
-    {
-      label: "Dashboard",
+// =========================================
+// NAVIGATION ITEMS
+// =========================================
 
-      path:
-        ROUTES.dashboard,
-
-      icon:
-        LayoutDashboard,
-    },
-
-    {
-      label: "Study",
-
-      path:
-        ROUTES.study,
-
-      icon:
-        Timer,
-    },
-
-    {
-      label: "Skill Tree",
-
-      path:
-        ROUTES.skills,
-
-      icon:
-        Waypoints,
-    },
-
-    {
-      label: "History",
-
-      path:
-        ROUTES.history,
-
-      icon:
-        History,
-    },
-
-    {
-      label:
-        "Achievements",
-
-      path:
-        ROUTES.achievements,
-
-      icon:
-        Award,
-    },
-
-    {
-      label: "Settings",
-
-      path:
-        ROUTES.settings,
-
-      icon:
-        Settings,
-    },
-  ];
+export const NAVIGATION_ITEMS: NavigationItem[] = [
+  {
+    label: "Dashboard",
+    path: ROUTES.dashboard,
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Study",
+    path: ROUTES.study,
+    icon: Timer,
+  },
+  {
+    label: "Skill Tree",
+    path: ROUTES.skills,
+    icon: Waypoints,
+  },
+  {
+    label: "History",
+    path: ROUTES.history,
+    icon: History,
+  },
+  {
+    label: "Achievements",
+    path: ROUTES.achievements,
+    icon: Award,
+  },
+  {
+    label: "Settings",
+    path: ROUTES.settings,
+    icon: Settings,
+  },
+];

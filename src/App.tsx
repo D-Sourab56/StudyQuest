@@ -1,3 +1,4 @@
+
 import {
   Navigate,
   Route,
@@ -5,9 +6,6 @@ import {
 } from "react-router";
 
 import AppLayout from "./components/layout/AppLayout";
-
-import SubjectSummariesPage from "./pages/SubjectSummariesPage";
-import SubjectSkillsPage from "./pages/SubjectSkillsPage";
 
 import {
   ROUTES,
@@ -19,100 +17,96 @@ import History from "./pages/History";
 import Settings from "./pages/Settings";
 import SkillTree from "./pages/SkillTree";
 import Study from "./pages/Study";
+
 import SubjectDetailsPage from "./pages/SubjectDetailsPage";
+import SubjectSummariesPage from "./pages/SubjectSummariesPage";
+import SubjectSkillsPage from "./pages/SubjectSkillsPage";
 
 function App() {
   return (
     <Routes>
-      <Route
-        element={
-          <AppLayout />
-        }
-      >
-        <Route
-          path={
-            ROUTES.dashboard
-          }
-          element={
-            <Dashboard />
-          }
-        />
+      {/* ========================================= */}
+      {/* SHARED APP LAYOUT */}
+      {/* ========================================= */}
+
+      <Route element={<AppLayout />}>
+
+        {/* DASHBOARD */}
 
         <Route
-          path={
-            ROUTES.study
-          }
-          element={
-            <Study />
-          }
+          path={ROUTES.dashboard}
+          element={<Dashboard />}
         />
 
-        <Route
-          path={
-            ROUTES.subjectDetails
-          }
-          element={
-            <SubjectDetailsPage />
-          }
-        />
+        {/* STUDY */}
 
         <Route
-          path={
-            ROUTES.skills
-          }
-          element={
-            <SkillTree />
-          }
+          path={ROUTES.study}
+          element={<Study />}
         />
 
-        <Route
-          path={
-            ROUTES.history
-          }
-          element={
-            <History />
-          }
-        />
+        {/* SUBJECT DETAILS */}
 
         <Route
-          path={
-            ROUTES.achievements
-          }
-          element={
-            <Achievements />
-          }
+          path={ROUTES.subjectDetails}
+          element={<SubjectDetailsPage />}
         />
 
+        {/* SUBJECT SUMMARIES */}
+
         <Route
-          path={
-            ROUTES.settings
-          }
-          element={
-            <Settings />
-          }
+          path={ROUTES.subjectSummaries}
+          element={<SubjectSummariesPage />}
         />
+
+        {/* SUBJECT SKILLS */}
+
+        <Route
+          path={ROUTES.subjectSkills}
+          element={<SubjectSkillsPage />}
+        />
+
+        {/* SKILL TREE */}
+
+        <Route
+          path={ROUTES.skills}
+          element={<SkillTree />}
+        />
+
+        {/* HISTORY */}
+
+        <Route
+          path={ROUTES.history}
+          element={<History />}
+        />
+
+        {/* ACHIEVEMENTS */}
+
+        <Route
+          path={ROUTES.achievements}
+          element={<Achievements />}
+        />
+
+        {/* SETTINGS */}
+
+        <Route
+          path={ROUTES.settings}
+          element={<Settings />}
+        />
+
+        {/* UNKNOWN ROUTES */}
 
         <Route
           path="*"
           element={
             <Navigate
-              to={
-                ROUTES.dashboard
-              }
+              to={ROUTES.dashboard}
               replace
             />
           }
         />
-      </Route>
-      <Route
-        path={ROUTES.subjectSummaries}
-          element={<SubjectSummariesPage />}
-      />
 
-      <Route
-        path={ROUTES.subjectSkills}
-          element={<SubjectSkillsPage />}
-      />
+      </Route>
     </Routes>
   );
 }

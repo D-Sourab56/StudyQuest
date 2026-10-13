@@ -39,14 +39,25 @@ import {
 } from "../utils/xp";
 
 function SubjectDetailsPage() {
-  const { subjectId } = useParams();
+  // =========================================
+  // SUBJECT NAME FROM URL
+  // =========================================
+
+  const { subjectName } = useParams<{
+    subjectName: string;
+  }>();
 
   const subjects = storageService.getSubjects();
   const sessions = storageService.getSessions();
 
+  // =========================================
+  // FIND SUBJECT BY NAME
+  // =========================================
+
   const subject = subjects.find(
     (currentSubject) =>
-      currentSubject.id === subjectId
+      currentSubject.name.toLowerCase() ===
+      subjectName?.toLowerCase()
   );
 
   // =========================================
@@ -64,8 +75,9 @@ function SubjectDetailsPage() {
           <h1>Subject not found</h1>
 
           <p>
-            This subject may have been deleted
-            or is no longer available.
+            This subject may have been
+            renamed, deleted, or is no
+            longer available.
           </p>
 
           <Link
@@ -84,6 +96,8 @@ function SubjectDetailsPage() {
   // SUBJECT SESSIONS
   // =========================================
 
+  // We still use the subject UUID internally.
+
   const subjectSessions = sessions
     .filter(
       (session) =>
@@ -101,9 +115,17 @@ function SubjectDetailsPage() {
     0
   );
 
+  // =========================================
+  // XP
+  // =========================================
+
   const totalSubjectXp = getSubjectXP(
     subjectSessions
   );
+
+  // =========================================
+  // RECENT ACTIVITY
+  // =========================================
 
   const recentSessions = subjectSessions.slice(
     0,
@@ -118,7 +140,7 @@ function SubjectDetailsPage() {
     <div className="page-container subject-page">
 
       {/* ========================================= */}
-      {/* BACK */}
+      {/* BACK TO STUDY */}
       {/* ========================================= */}
 
       <Link
@@ -222,7 +244,7 @@ function SubjectDetailsPage() {
           </div>
         </article>
 
-        {/* XP */}
+        {/* XP EARNED */}
 
         <article className="subject-stat-card">
           <div className="subject-stat-icon">
@@ -247,7 +269,6 @@ function SubjectDetailsPage() {
       {/* ========================================= */}
 
       <section className="panel subject-page-section">
-
         <div className="subject-page-section-header">
           <div>
             <p className="panel-label">
@@ -274,10 +295,10 @@ function SubjectDetailsPage() {
         </div>
 
         <p className="subject-progress-help">
-          Progress will later connect with
-          completed skills in your Skill Tree.
+          Progress will later connect
+          with completed skills in
+          your Skill Tree.
         </p>
-
       </section>
 
       {/* ========================================= */}
@@ -285,7 +306,6 @@ function SubjectDetailsPage() {
       {/* ========================================= */}
 
       <section className="panel subject-page-section">
-
         <div className="subject-page-section-header">
           <div>
             <p className="panel-label">
@@ -299,6 +319,7 @@ function SubjectDetailsPage() {
 
           <span className="subject-session-count">
             {subjectSessions.length}
+
             {subjectSessions.length === 1
               ? " session"
               : " sessions"}
@@ -306,7 +327,6 @@ function SubjectDetailsPage() {
         </div>
 
         {recentSessions.length === 0 ? (
-
           <div className="subject-page-empty">
             <Clock3 size={24} />
 
@@ -321,50 +341,42 @@ function SubjectDetailsPage() {
               </p>
             </div>
           </div>
-
         ) : (
-
           <div className="subject-session-list">
+            {recentSessions.map((session) => (
+              <article
+                key={session.id}
+                className="subject-session-row"
+              >
+                <div>
+                  <strong>
+                    {new Date(
+                      session.endedAt
+                    ).toLocaleDateString()}
+                  </strong>
 
-            {recentSessions.map(
-              (session) => (
-                <article
-                  key={session.id}
-                  className="subject-session-row"
-                >
-                  <div>
-                    <strong>
-                      {new Date(
-                        session.endedAt
-                      ).toLocaleDateString()}
-                    </strong>
-
-                    <span>
-                      {new Date(
-                        session.startedAt
-                      ).toLocaleTimeString(
-                        [],
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }
-                      )}
-                    </span>
-                  </div>
-
-                  <span className="subject-session-duration">
-                    {formatElapsedTime(
-                      session.durationMs
+                  <span>
+                    {new Date(
+                      session.startedAt
+                    ).toLocaleTimeString(
+                      [],
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
                     )}
                   </span>
-                </article>
-              )
-            )}
+                </div>
 
+                <span className="subject-session-duration">
+                  {formatElapsedTime(
+                    session.durationMs
+                  )}
+                </span>
+              </article>
+            ))}
           </div>
-
         )}
-
       </section>
 
       {/* ========================================= */}
@@ -376,7 +388,9 @@ function SubjectDetailsPage() {
         {/* STUDY SUMMARIES */}
 
         <Link
-          to={getSubjectSummariesRoute(subject.id)}
+          to={getSubjectSummariesRoute(
+            subject.name
+          )}
           className="panel subject-resource-card"
         >
           <div className="subject-resource-card-top">
@@ -402,7 +416,9 @@ function SubjectDetailsPage() {
         {/* RELATED SKILLS */}
 
         <Link
-          to={getSubjectSkillsRoute(subject.id)}
+          to={getSubjectSkillsRoute(
+            subject.name
+          )}
           className="panel subject-resource-card"
         >
           <div className="subject-resource-card-top">
