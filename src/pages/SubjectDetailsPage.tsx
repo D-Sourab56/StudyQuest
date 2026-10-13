@@ -145,10 +145,10 @@ function SubjectDetailsPage() {
 
       <Link
         to={ROUTES.study}
-        className="subject-back-link"
+        className="subject-page-back"
       >
         <ArrowLeft size={17} />
-        Study
+        Back to Study
       </Link>
 
       {/* ========================================= */}
