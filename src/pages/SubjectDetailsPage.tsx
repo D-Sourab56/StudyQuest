@@ -1,9 +1,13 @@
+
 import {
   ArrowLeft,
+  ArrowUpRight,
   BookOpen,
+  BookOpenText,
   CalendarDays,
   Clock3,
   Layers3,
+  Waypoints,
   Zap,
 } from "lucide-react";
 
@@ -14,6 +18,8 @@ import {
 
 import {
   ROUTES,
+  getSubjectSkillsRoute,
+  getSubjectSummariesRoute,
 } from "../data/appConfig";
 
 import {
@@ -33,22 +39,15 @@ import {
 } from "../utils/xp";
 
 function SubjectDetailsPage() {
-  const {
-    subjectId,
-  } = useParams();
+  const { subjectId } = useParams();
 
-  const subjects =
-    storageService.getSubjects();
+  const subjects = storageService.getSubjects();
+  const sessions = storageService.getSessions();
 
-  const sessions =
-    storageService.getSessions();
-
-  const subject =
-    subjects.find(
-      (currentSubject) =>
-        currentSubject.id ===
-        subjectId
-    );
+  const subject = subjects.find(
+    (currentSubject) =>
+      currentSubject.id === subjectId
+  );
 
   // =========================================
   // SUBJECT NOT FOUND
@@ -62,24 +61,18 @@ function SubjectDetailsPage() {
             <BookOpen size={30} />
           </div>
 
-          <h1>
-            Subject not found
-          </h1>
+          <h1>Subject not found</h1>
 
           <p>
-            This subject may have been
-            deleted or is no longer
-            available.
+            This subject may have been deleted
+            or is no longer available.
           </p>
 
           <Link
             to={ROUTES.study}
             className="primary-button"
           >
-            <ArrowLeft
-              size={17}
-            />
-
+            <ArrowLeft size={17} />
             Back to Study
           </Link>
         </section>
@@ -91,77 +84,59 @@ function SubjectDetailsPage() {
   // SUBJECT SESSIONS
   // =========================================
 
-  const subjectSessions =
-    sessions
-      .filter(
-        (session) =>
-          session.subjectId ===
-          subject.id
-      )
-      .sort(
-        (a, b) =>
-          new Date(
-            b.endedAt
-          ).getTime() -
-          new Date(
-            a.endedAt
-          ).getTime()
-      );
-
-  const totalStudyMs =
-    subjectSessions.reduce(
-      (
-        total,
-        session
-      ) =>
-        total +
-        session.durationMs,
-      0
+  const subjectSessions = sessions
+    .filter(
+      (session) =>
+        session.subjectId === subject.id
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.endedAt).getTime() -
+        new Date(a.endedAt).getTime()
     );
 
-    const totalSubjectXp =
-        getSubjectXP(
-            subjectSessions
-        );
+  const totalStudyMs = subjectSessions.reduce(
+    (total, session) =>
+      total + session.durationMs,
+    0
+  );
 
-  const recentSessions =
-    subjectSessions.slice(
-      0,
-      5
-    );
+  const totalSubjectXp = getSubjectXP(
+    subjectSessions
+  );
 
-  const createdDate =
-    new Date(
-      subject.createdAt
-    ).toLocaleDateString();
+  const recentSessions = subjectSessions.slice(
+    0,
+    5
+  );
+
+  const createdDate = new Date(
+    subject.createdAt
+  ).toLocaleDateString();
 
   return (
     <div className="page-container subject-page">
-      {/* ============================== */}
+
+      {/* ========================================= */}
       {/* BACK */}
-      {/* ============================== */}
+      {/* ========================================= */}
 
       <Link
         to={ROUTES.study}
         className="subject-back-link"
       >
-        <ArrowLeft
-          size={17}
-        />
-
+        <ArrowLeft size={17} />
         Study
       </Link>
 
-      {/* ============================== */}
+      {/* ========================================= */}
       {/* SUBJECT HERO */}
-      {/* ============================== */}
+      {/* ========================================= */}
 
       <section className="panel subject-page-hero">
         <div className="subject-page-identity">
           <div className="subject-page-letter">
-            {getSubjectInitial(
-              subject.name
-            )}
+            {getSubjectInitial(subject.name)}
           </div>
 
           <div>
@@ -175,34 +150,29 @@ function SubjectDetailsPage() {
 
             {subject.category && (
               <p className="subject-page-category">
-                {
-                  subject.category
-                }
+                {subject.category}
               </p>
             )}
           </div>
         </div>
 
         <div className="subject-page-created">
-          <CalendarDays
-            size={16}
-          />
-
-          Created{" "}
-          {createdDate}
+          <CalendarDays size={16} />
+          Created {createdDate}
         </div>
       </section>
 
-      {/* ============================== */}
+      {/* ========================================= */}
       {/* STATISTICS */}
-      {/* ============================== */}
+      {/* ========================================= */}
 
       <section className="subject-page-stats">
+
+        {/* TOTAL STUDY TIME */}
+
         <article className="subject-stat-card">
           <div className="subject-stat-icon">
-            <Clock3
-              size={20}
-            />
+            <Clock3 size={20} />
           </div>
 
           <div>
@@ -211,18 +181,16 @@ function SubjectDetailsPage() {
             </span>
 
             <strong>
-              {formatElapsedTime(
-                totalStudyMs
-              )}
+              {formatElapsedTime(totalStudyMs)}
             </strong>
           </div>
         </article>
 
+        {/* SESSIONS */}
+
         <article className="subject-stat-card">
           <div className="subject-stat-icon">
-            <Layers3
-              size={20}
-            />
+            <Layers3 size={20} />
           </div>
 
           <div>
@@ -231,18 +199,16 @@ function SubjectDetailsPage() {
             </span>
 
             <strong>
-              {
-                subjectSessions.length
-              }
+              {subjectSessions.length}
             </strong>
           </div>
         </article>
 
+        {/* PROGRESS */}
+
         <article className="subject-stat-card">
           <div className="subject-stat-icon">
-            <BookOpen
-              size={20}
-            />
+            <BookOpen size={20} />
           </div>
 
           <div>
@@ -251,36 +217,37 @@ function SubjectDetailsPage() {
             </span>
 
             <strong>
-              {
-                subject.progress
-              }
-              %
+              {subject.progress}%
             </strong>
           </div>
         </article>
-        
+
+        {/* XP */}
+
         <article className="subject-stat-card">
-            <div className="subject-stat-icon">
-                <Zap size={20} />
-            </div>
+          <div className="subject-stat-icon">
+            <Zap size={20} />
+          </div>
 
-            <div>
-                <span>
-                XP Earned
-                </span>
+          <div>
+            <span>
+              XP Earned
+            </span>
 
-                <strong>
-                {totalSubjectXp} XP
-                </strong>
-            </div>
+            <strong>
+              {totalSubjectXp} XP
+            </strong>
+          </div>
         </article>
+
       </section>
 
-      {/* ============================== */}
-      {/* PROGRESS */}
-      {/* ============================== */}
+      {/* ========================================= */}
+      {/* LEARNING PROGRESS */}
+      {/* ========================================= */}
 
       <section className="panel subject-page-section">
+
         <div className="subject-page-section-header">
           <div>
             <p className="panel-label">
@@ -293,10 +260,7 @@ function SubjectDetailsPage() {
           </div>
 
           <strong className="subject-progress-number">
-            {
-              subject.progress
-            }
-            %
+            {subject.progress}%
           </strong>
         </div>
 
@@ -304,24 +268,24 @@ function SubjectDetailsPage() {
           <div
             className="progress-fill"
             style={{
-              width:
-                `${subject.progress}%`,
+              width: `${subject.progress}%`,
             }}
           />
         </div>
 
         <p className="subject-progress-help">
-          Progress will later connect
-          with completed skills in your
-          Skill Tree.
+          Progress will later connect with
+          completed skills in your Skill Tree.
         </p>
+
       </section>
 
-      {/* ============================== */}
+      {/* ========================================= */}
       {/* RECENT STUDY SESSIONS */}
-      {/* ============================== */}
+      {/* ========================================= */}
 
       <section className="panel subject-page-section">
+
         <div className="subject-page-section-header">
           <div>
             <p className="panel-label">
@@ -334,23 +298,17 @@ function SubjectDetailsPage() {
           </div>
 
           <span className="subject-session-count">
-            {
-              subjectSessions.length
-            }
-
-            {subjectSessions.length ===
-            1
+            {subjectSessions.length}
+            {subjectSessions.length === 1
               ? " session"
               : " sessions"}
           </span>
         </div>
 
-        {recentSessions.length ===
-        0 ? (
+        {recentSessions.length === 0 ? (
+
           <div className="subject-page-empty">
-            <Clock3
-              size={24}
-            />
+            <Clock3 size={24} />
 
             <div>
               <strong>
@@ -358,20 +316,20 @@ function SubjectDetailsPage() {
               </strong>
 
               <p>
-                Your study sessions
-                for {subject.name} will
-                appear here.
+                Your study sessions for{" "}
+                {subject.name} will appear here.
               </p>
             </div>
           </div>
+
         ) : (
+
           <div className="subject-session-list">
+
             {recentSessions.map(
               (session) => (
                 <article
-                  key={
-                    session.id
-                  }
+                  key={session.id}
                   className="subject-session-row"
                 >
                   <div>
@@ -387,11 +345,8 @@ function SubjectDetailsPage() {
                       ).toLocaleTimeString(
                         [],
                         {
-                          hour:
-                            "2-digit",
-
-                          minute:
-                            "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
                         }
                       )}
                     </span>
@@ -405,36 +360,58 @@ function SubjectDetailsPage() {
                 </article>
               )
             )}
+
           </div>
+
         )}
+
       </section>
 
-      {/* ============================== */}
-      {/* FUTURE LEARNING DATA */}
-      {/* ============================== */}
+      {/* ========================================= */}
+      {/* SUBJECT RESOURCES */}
+      {/* ========================================= */}
 
-      <section className="subject-future-grid">
-        <article className="panel subject-future-card">
+      <section className="subject-resource-grid">
+
+        {/* STUDY SUMMARIES */}
+
+        <Link
+          to={getSubjectSummariesRoute(subject.id)}
+          className="panel subject-resource-card"
+        >
+          <div className="subject-resource-card-top">
+            <BookOpenText size={25} />
+            <ArrowUpRight size={19} />
+          </div>
+
           <p className="panel-label">
-            STUDY NOTES
+            LEARNING NOTES
           </p>
 
           <h2>
-            What you've learned
+            Study summaries
           </h2>
 
           <p>
-            Your study summaries
-            and key points will
-            appear here after we
-            build the learning
-            summary system.
+            Read, organize, and manage
+            everything you've learned
+            in {subject.name}.
           </p>
-        </article>
+        </Link>
 
-        <article className="panel subject-future-card">
+        {/* RELATED SKILLS */}
+
+        <Link
+          to={getSubjectSkillsRoute(subject.id)}
+          className="panel subject-resource-card"
+        >
+          <div className="subject-resource-card-top">
+            <Waypoints size={25} />
+            <ArrowUpRight size={19} />
+          </div>
+
           <p className="panel-label">
-            SKILLS
+            SKILL DEVELOPMENT
           </p>
 
           <h2>
@@ -442,14 +419,14 @@ function SubjectDetailsPage() {
           </h2>
 
           <p>
-            Skills connected to
-            {` ${subject.name} `}
-            will appear here once
-            we build the Skill
-            Tree system.
+            Explore your skills and
+            learning milestones.
+            Coming soon.
           </p>
-        </article>
+        </Link>
+
       </section>
+
     </div>
   );
 }

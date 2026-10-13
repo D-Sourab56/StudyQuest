@@ -6,6 +6,9 @@ import {
 
 import AppLayout from "./components/layout/AppLayout";
 
+import SubjectSummariesPage from "./pages/SubjectSummariesPage";
+import SubjectSkillsPage from "./pages/SubjectSkillsPage";
+
 import {
   ROUTES,
 } from "./data/appConfig";
@@ -101,6 +104,15 @@ function App() {
           }
         />
       </Route>
+      <Route
+        path={ROUTES.subjectSummaries}
+          element={<SubjectSummariesPage />}
+      />
+
+      <Route
+        path={ROUTES.subjectSkills}
+          element={<SubjectSkillsPage />}
+      />
     </Routes>
   );
 }

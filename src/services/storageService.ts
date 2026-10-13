@@ -1,18 +1,9 @@
-import {
-  STORAGE_CONFIG,
-} from "../data/storageConfig";
+import { STORAGE_CONFIG } from "../data/storageConfig";
 
-import type {
-  StudySession,
-} from "../types/session";
-
-import type {
-  StudySubject,
-} from "../types/subject";
-
-import type {
-  ActiveStudyTimer,
-} from "../types/timer";
+import type { StudySession } from "../types/session";
+import type { StudySubject } from "../types/subject";
+import type { StudySummary } from "../types/summary";
+import type { ActiveStudyTimer } from "../types/timer";
 
 interface StudyQuestData {
   version: number;
@@ -21,17 +12,19 @@ interface StudyQuestData {
 
   sessions: StudySession[];
 
-  activeTimer:
-    ActiveStudyTimer | null;
+  summaries: StudySummary[];
+
+  activeTimer: ActiveStudyTimer | null;
 }
 
 const DEFAULT_DATA: StudyQuestData = {
-  version:
-    STORAGE_CONFIG.version,
+  version: STORAGE_CONFIG.version,
 
   subjects: [],
 
   sessions: [],
+
+  summaries: [],
 
   activeTimer: null,
 };
@@ -91,8 +84,7 @@ function normalizeStudySession(
     value as Partial<StudySession>;
 
   if (
-    typeof session.id !==
-      "string" ||
+    typeof session.id !== "string" ||
     typeof session.subjectId !==
       "string" ||
     typeof session.startedAt !==
@@ -114,8 +106,7 @@ function normalizeStudySession(
       : 0;
 
   return {
-    id:
-      session.id,
+    id: session.id,
 
     subjectId:
       session.subjectId,
@@ -137,7 +128,61 @@ function normalizeStudySession(
 }
 
 // =========================================
-// READ DATA
+// SUMMARY NORMALIZATION
+// =========================================
+
+function normalizeStudySummary(
+  value: unknown
+): StudySummary | null {
+  if (
+    !value ||
+    typeof value !== "object"
+  ) {
+    return null;
+  }
+
+  const summary =
+    value as Partial<StudySummary>;
+
+  if (
+    typeof summary.id !== "string" ||
+    typeof summary.subjectId !==
+      "string" ||
+    typeof summary.topic !==
+      "string" ||
+    typeof summary.content !==
+      "string" ||
+    typeof summary.createdAt !==
+      "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: summary.id,
+
+    subjectId:
+      summary.subjectId,
+
+    sessionId:
+      typeof summary.sessionId ===
+      "string"
+        ? summary.sessionId
+        : undefined,
+
+    topic:
+      summary.topic,
+
+    content:
+      summary.content,
+
+    createdAt:
+      summary.createdAt,
+  };
+}
+
+// =========================================
+// READ
 // =========================================
 
 function readData(): StudyQuestData {
@@ -172,6 +217,22 @@ function readData(): StudyQuestData {
             )
         : [];
 
+    const summaries =
+      Array.isArray(
+        parsedData.summaries
+      )
+        ? parsedData.summaries
+            .map(
+              normalizeStudySummary
+            )
+            .filter(
+              (
+                summary
+              ): summary is StudySummary =>
+                summary !== null
+            )
+        : [];
+
     return {
       version:
         typeof parsedData.version ===
@@ -187,6 +248,8 @@ function readData(): StudyQuestData {
           : [],
 
       sessions,
+
+      summaries,
 
       activeTimer:
         isActiveStudyTimer(
@@ -206,7 +269,7 @@ function readData(): StudyQuestData {
 }
 
 // =========================================
-// SAVE DATA
+// SAVE
 // =========================================
 
 function saveData(
@@ -242,7 +305,6 @@ function saveSubjects(
 
   saveData({
     ...currentData,
-
     subjects,
   });
 }
@@ -264,7 +326,6 @@ function saveSessions(
 
   saveData({
     ...currentData,
-
     sessions,
   });
 }
@@ -286,6 +347,63 @@ function addSession(
 }
 
 // =========================================
+// SUMMARIES
+// =========================================
+
+function getSummaries():
+  StudySummary[] {
+  return readData().summaries;
+}
+
+function saveSummaries(
+  summaries: StudySummary[]
+): void {
+  const currentData =
+    readData();
+
+  saveData({
+    ...currentData,
+    summaries,
+  });
+}
+
+function addSummary(
+  summary: StudySummary
+): void {
+  const currentData =
+    readData();
+
+  saveData({
+    ...currentData,
+
+    summaries: [
+      ...currentData.summaries,
+      summary,
+    ],
+  });
+}
+
+function deleteSummary(
+  summaryId: string
+): void {
+  const currentData =
+    readData();
+
+  const updatedSummaries =
+    currentData.summaries.filter(
+      (summary) =>
+        summary.id !== summaryId
+    );
+
+  saveData({
+    ...currentData,
+
+    summaries:
+      updatedSummaries,
+  });
+}
+
+// =========================================
 // ACTIVE TIMER
 // =========================================
 
@@ -302,22 +420,17 @@ function saveActiveTimer(
 
   saveData({
     ...currentData,
-
-    activeTimer:
-      timer,
+    activeTimer: timer,
   });
 }
 
-function clearActiveTimer():
-  void {
+function clearActiveTimer(): void {
   const currentData =
     readData();
 
   saveData({
     ...currentData,
-
-    activeTimer:
-      null,
+    activeTimer: null,
   });
 }
 
@@ -335,6 +448,14 @@ export const storageService = {
   saveSessions,
 
   addSession,
+
+  getSummaries,
+
+  saveSummaries,
+
+  addSummary,
+
+  deleteSummary,
 
   getActiveTimer,
 

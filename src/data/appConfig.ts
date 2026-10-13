@@ -36,7 +36,19 @@ export const ROUTES = {
 
   subjectDetails:
     "/subjects/:subjectId",
+
+  subjectSummaries: "/subjects/:subjectId/summaries",
+
+  subjectSkills: "/subjects/:subjectId/skills",
 } as const;
+
+  export function getSubjectSummariesRoute(subjectId: string): string {
+    return `/subjects/${subjectId}/summaries`;
+  }
+
+  export function getSubjectSkillsRoute(subjectId: string): string {
+    return `/subjects/${subjectId}/skills`;
+  }
 
 export function getSubjectRoute(
   subjectId: string

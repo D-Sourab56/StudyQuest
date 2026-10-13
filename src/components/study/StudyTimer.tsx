@@ -7,10 +7,6 @@ import {
 } from "lucide-react";
 
 import {
-  getSubjectInitial,
-} from "../../utils/subject";
-
-import {
   useEffect,
   useState,
 } from "react";
@@ -19,18 +15,19 @@ import {
   useStudyTimer,
 } from "../../context/StudyTimerContext";
 
-import {
-  storageService,
-} from "../../services/storageService";
-
 import type {
   StudySubject,
 } from "../../types/subject";
 
 import {
+  getSubjectInitial,
+} from "../../utils/subject";
+
+import {
   formatElapsedTime,
 } from "../../utils/time";
 
+import StudySummaryForm from "./StudySummaryForm";
 import SubjectSelect from "./SubjectSelect";
 
 interface StudyTimerProps {
@@ -77,8 +74,6 @@ function StudyTimer({
   // =========================================
 
   useEffect(() => {
-    // While a timer is active, the selector
-    // should stay connected to that subject.
     if (activeTimer) {
       if (
         selectedSubjectId !==
@@ -92,9 +87,6 @@ function StudyTimer({
       return;
     }
 
-    // When there is no active timer,
-    // allow the user to freely select
-    // Java, SQL, or any other subject.
     const selectedExists =
       subjects.some(
         (subject) =>
@@ -102,8 +94,6 @@ function StudyTimer({
           selectedSubjectId
       );
 
-    // If the selected subject was deleted,
-    // fall back to the first available subject.
     if (!selectedExists) {
       setSelectedSubjectId(
         subjects[0]?.id ?? ""
@@ -121,13 +111,11 @@ function StudyTimer({
 
   const completedSubject =
     completedSession
-      ? storageService
-          .getSubjects()
-          .find(
-            (subject) =>
-              subject.id ===
-              completedSession.subjectId
-          )
+      ? subjects.find(
+          (subject) =>
+            subject.id ===
+            completedSession.subjectId
+        )
       : undefined;
 
   return (
@@ -142,10 +130,10 @@ function StudyTimer({
             <div className="timer-top-row">
               <div className="timer-subject-info">
                 <div className="timer-subject-icon subject-letter-icon">
-                      {getSubjectInitial(
-                        activeSubject.name
-                      )}
-                    </div>
+                  {getSubjectInitial(
+                    activeSubject.name
+                  )}
+                </div>
 
                 <div>
                   <p className="panel-label">
@@ -181,7 +169,9 @@ function StudyTimer({
             </div>
 
             <div className="timer-display-area">
-              <Clock3 size={24} />
+              <Clock3
+                size={24}
+              />
 
               <div className="timer-display">
                 {formatElapsedTime(
@@ -268,7 +258,9 @@ function StudyTimer({
               </label>
 
               <SubjectSelect
-                subjects={subjects}
+                subjects={
+                  subjects
+                }
                 value={
                   selectedSubjectId
                 }
@@ -290,7 +282,9 @@ function StudyTimer({
                 )
               }
             >
-              <Play size={18} />
+              <Play
+                size={18}
+              />
 
               Start session
             </button>
@@ -299,46 +293,68 @@ function StudyTimer({
       )}
 
       {/* ================================= */}
-      {/* SESSION SAVED */}
+      {/* COMPLETED SESSION */}
       {/* ================================= */}
 
       {!activeTimer &&
         completedSession &&
         completedSubject && (
-          <div className="timer-complete-preview">
-            <div className="timer-complete-icon">
-              <CheckCircle2
-                size={22}
-              />
+          <>
+            <div className="timer-complete-preview">
+              <div className="timer-complete-icon">
+                <CheckCircle2
+                  size={22}
+                />
+              </div>
+
+              <div>
+                <p>
+                  Session saved
+                </p>
+
+                <strong>
+                  {
+                    completedSubject.name
+                  }
+
+                  {" · "}
+
+                  {formatElapsedTime(
+                    completedSession.durationMs
+                  )}
+
+                  {" · +"}
+
+                  {
+                    completedSession.xpEarned
+                  }
+
+                  {" XP"}
+                </strong>
+
+                <span>
+                  Your study session has
+                  been saved successfully.
+                </span>
+              </div>
             </div>
 
-            <div>
-              <p>
-                Session saved
-              </p>
+            {/* ================================= */}
+            {/* STUDY SUMMARY */}
+            {/* ================================= */}
 
-              <strong>
-                {completedSubject.name}
-
-                {" · "}
-
-                {formatElapsedTime(
-                  completedSession.durationMs
-                )}
-
-                {" · +"}
-
-                {completedSession.xpEarned}
-
-                {" XP"}
-              </strong>
-
-              <span>
-                Your study session has
-                been saved successfully.
-              </span>
-            </div>
-          </div>
+            <StudySummaryForm
+              key={
+                completedSession.id
+              }
+              session={
+                completedSession
+              }
+              subjectName={
+                completedSubject.name
+              }
+            />
+          </>
         )}
     </section>
   );
