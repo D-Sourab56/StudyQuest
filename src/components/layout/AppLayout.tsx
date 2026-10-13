@@ -1,3 +1,4 @@
+
 import {
   BookOpenCheck,
   Sparkles,
@@ -6,13 +7,8 @@ import {
 import {
   NavLink,
   Outlet,
-  useNavigate,
+  useLocation,
 } from "react-router";
-
-import {
-  useEffect,
-  useRef,
-} from "react";
 
 import CompactStudyTimer from "../study/CompactStudyTimer";
 
@@ -24,59 +20,42 @@ import {
 } from "../../data/appConfig";
 
 function AppLayout() {
-  const navigate =
-    useNavigate();
+  const location = useLocation();
 
   // =========================================
-  // RETURN TO DASHBOARD AFTER REFRESH
+  // ACTIVE NAVIGATION
   // =========================================
 
-  const hasCheckedRefresh =
-    useRef(false);
+  // Subject details, summaries, and skills
+  // all belong to the Study section.
 
-  useEffect(() => {
+  const isSubjectPage =
+    location.pathname.startsWith("/subjects/");
+
+  function isNavigationActive(
+    path: string,
+    isActive: boolean
+  ): boolean {
     if (
-      hasCheckedRefresh.current
+      path === ROUTES.study &&
+      isSubjectPage
     ) {
-      return;
+      return true;
     }
 
-    hasCheckedRefresh.current =
-      true;
-
-    const navigationEntry =
-      performance.getEntriesByType(
-        "navigation"
-      )[0] as
-        | PerformanceNavigationTiming
-        | undefined;
-
-    const wasPageRefreshed =
-      navigationEntry?.type ===
-      "reload";
-
-    if (wasPageRefreshed) {
-      navigate(
-        ROUTES.dashboard,
-        {
-          replace: true,
-        }
-      );
-    }
-  }, [navigate]);
+    return isActive;
+  }
 
   return (
     <div className="app-shell">
-      {/* ============================== */}
+      {/* ================================= */}
       {/* DESKTOP SIDEBAR */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
-            <BookOpenCheck
-              size={24}
-            />
+            <BookOpenCheck size={24} />
           </div>
 
           <div>
@@ -90,51 +69,45 @@ function AppLayout() {
           </div>
         </div>
 
+        {/* NAVIGATION */}
+
         <nav className="sidebar-navigation">
-          {NAVIGATION_ITEMS.map(
-            (item) => {
-              const Icon =
-                item.icon;
+          {NAVIGATION_ITEMS.map((item) => {
+            const Icon = item.icon;
 
-              return (
-                <NavLink
-                  key={
-                    item.path
-                  }
-                  to={
-                    item.path
-                  }
-                  end={
-                    item.path ===
-                    ROUTES.dashboard
-                  }
-                  className={({
-                    isActive,
-                  }) =>
-                    `navigation-link ${
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={
+                  item.path ===
+                  ROUTES.dashboard
+                }
+                className={({ isActive }) =>
+                  `navigation-link ${
+                    isNavigationActive(
+                      item.path,
                       isActive
-                        ? "active"
-                        : ""
-                    }`
-                  }
-                >
-                  <Icon
-                    size={20}
-                  />
+                    )
+                      ? "active"
+                      : ""
+                  }`
+                }
+              >
+                <Icon size={20} />
 
-                  <span>
-                    {item.label}
-                  </span>
-                </NavLink>
-              );
-            }
-          )}
+                <span>
+                  {item.label}
+                </span>
+              </NavLink>
+            );
+          })}
         </nav>
 
+        {/* SIDEBAR MESSAGE */}
+
         <div className="sidebar-message">
-          <Sparkles
-            size={20}
-          />
+          <Sparkles size={20} />
 
           <div>
             <strong>
@@ -149,15 +122,13 @@ function AppLayout() {
         </div>
       </aside>
 
-      {/* ============================== */}
+      {/* ================================= */}
       {/* MOBILE HEADER */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <div className="mobile-header">
         <div className="brand-icon">
-          <BookOpenCheck
-            size={21}
-          />
+          <BookOpenCheck size={21} />
         </div>
 
         <span>
@@ -165,63 +136,55 @@ function AppLayout() {
         </span>
       </div>
 
-      {/* ============================== */}
-      {/* PAGE */}
-      {/* ============================== */}
+      {/* ================================= */}
+      {/* MAIN PAGE */}
+      {/* ================================= */}
 
       <main className="app-main">
         <Outlet />
       </main>
 
-      {/* ============================== */}
+      {/* ================================= */}
       {/* GLOBAL ACTIVE TIMER */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <CompactStudyTimer />
 
-      {/* ============================== */}
+      {/* ================================= */}
       {/* MOBILE NAVIGATION */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <nav className="mobile-navigation">
-        {NAVIGATION_ITEMS.map(
-          (item) => {
-            const Icon =
-              item.icon;
+        {NAVIGATION_ITEMS.map((item) => {
+          const Icon = item.icon;
 
-            return (
-              <NavLink
-                key={
-                  item.path
-                }
-                to={
-                  item.path
-                }
-                end={
-                  item.path ===
-                  ROUTES.dashboard
-                }
-                className={({
-                  isActive,
-                }) =>
-                  `mobile-navigation-link ${
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={
+                item.path ===
+                ROUTES.dashboard
+              }
+              className={({ isActive }) =>
+                `mobile-navigation-link ${
+                  isNavigationActive(
+                    item.path,
                     isActive
-                      ? "active"
-                      : ""
-                  }`
-                }
-              >
-                <Icon
-                  size={20}
-                />
+                  )
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+              <Icon size={20} />
 
-                <span>
-                  {item.label}
-                </span>
-              </NavLink>
-            );
-          }
-        )}
+              <span>
+                {item.label}
+              </span>
+            </NavLink>
+          );
+        })}
       </nav>
     </div>
   );
