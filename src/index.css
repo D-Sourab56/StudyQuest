@@ -180,56 +180,61 @@ select:focus-visible {
 
 .app-shell {
   min-height: 100vh;
-
   display: grid;
-
-  grid-template-columns:
-    260px minmax(0, 1fr);
+  grid-template-columns: 270px minmax(0, 1fr);
 }
 
 .app-main {
   position: relative;
-
   min-width: 0;
-
   background: transparent;
 }
 
 
 /* =========================================================
-   SIDEBAR
+   GLASSMORPHISM SIDEBAR
    ========================================================= */
 
 .sidebar {
-  height: 100vh;
-
   position: sticky;
-  top: 0;
+  top: 14px;
+  height: calc(100vh - 28px);
+  min-height: 0;
+  margin: 14px 0 14px 14px;
+  padding: 26px 16px 18px;
 
   display: flex;
   flex-direction: column;
+  gap: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 
-  padding: 26px 18px;
-
-  color: #ffffff;
-
+  color: #f4fcf7;
   background:
-    rgba(11, 24, 17, 0.76);
+    radial-gradient(circle at 14% 0%, rgba(87, 204, 147, 0.20), transparent 43%),
+    linear-gradient(155deg, rgba(22, 64, 49, 0.83), rgba(12, 39, 33, 0.79) 58%, rgba(9, 31, 28, 0.86));
+  border: 1px solid rgba(213, 255, 231, 0.20);
+  border-radius: 24px;
 
-  border-right:
-    1px solid rgba(255, 255, 255, 0.1);
-
-  backdrop-filter:
-    blur(34px)
-    saturate(170%);
-
-  -webkit-backdrop-filter:
-    blur(34px)
-    saturate(170%);
+  -webkit-backdrop-filter: blur(34px) saturate(170%);
+  backdrop-filter: blur(34px) saturate(170%);
 
   box-shadow:
-    12px 0 45px
-    rgba(13, 28, 20, 0.1);
+    inset 1px 1px 0 rgba(255, 255, 255, 0.16),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.035),
+    10px 22px 55px rgba(17, 54, 40, 0.17);
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(194, 241, 215, 0.28) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(194, 241, 215, 0.28);
+  border-radius: 999px;
 }
 
 
@@ -240,125 +245,121 @@ select:focus-visible {
 .brand {
   display: flex;
   align-items: center;
-
   gap: 12px;
-
-  padding:
-    0 8px 28px;
+  padding: 2px 5px 24px;
+  margin-bottom: 17px;
+  border-bottom: 1px solid rgba(236, 255, 243, 0.13);
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-
+  width: 43px;
+  height: 43px;
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
   color: #ffffff;
+  background: linear-gradient(140deg, rgba(51, 207, 145, 0.9), rgba(13, 145, 98, 0.78));
+  border: 1px solid rgba(227, 255, 240, 0.37);
+  border-radius: 14px;
 
-  background:
-    rgba(42, 194, 132, 0.78);
-
-  border:
-    1px solid rgba(255, 255, 255, 0.2);
-
-  border-radius: 13px;
-
-  backdrop-filter:
-    blur(16px);
-
-  -webkit-backdrop-filter:
-    blur(16px);
-
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.22),
-    0 8px 25px
-      rgba(28, 164, 108, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 10px 25px rgba(14, 102, 69, 0.26);
 }
 
 .brand-name {
+  color: #ffffff;
   font-size: 17px;
-
-  font-weight: 680;
-
-  letter-spacing: -0.03em;
+  font-weight: 720;
+  letter-spacing: -0.035em;
 }
 
 .brand-subtitle {
-  margin-top: 3px;
-
-  color:
-    rgba(225, 237, 230, 0.55);
-
+  margin-top: 4px;
+  color: rgba(225, 245, 233, 0.65);
   font-size: 11px;
+  line-height: 1.35;
 }
 
 
 /* =========================================================
-   NAVIGATION
+   SIDEBAR NAVIGATION
    ========================================================= */
 
 .sidebar-navigation {
   display: flex;
   flex-direction: column;
-
-  gap: 5px;
+  gap: 6px;
 }
 
 .navigation-link {
+  position: relative;
   min-height: 46px;
-
   display: flex;
   align-items: center;
-
   gap: 13px;
-
   padding: 0 13px;
 
-  color:
-    rgba(231, 240, 234, 0.62);
-
+  color: rgba(235, 248, 240, 0.73);
   background: transparent;
-
   border: 1px solid transparent;
   border-radius: 14px;
-
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 610;
 
   transition:
+    color 180ms ease,
     background 180ms ease,
     border-color 180ms ease,
     transform 180ms var(--spring),
-    color 180ms ease;
+    box-shadow 180ms ease;
+}
+
+.navigation-link svg {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .navigation-link:hover {
   color: #ffffff;
-
-  background:
-    rgba(255, 255, 255, 0.07);
-
-  transform:
-    translateX(3px);
+  background: rgba(239, 255, 245, 0.11);
+  border-color: rgba(230, 255, 242, 0.10);
+  transform: translateX(2px);
 }
 
 .navigation-link.active {
   color: #ffffff;
-
-  background:
-    rgba(255, 255, 255, 0.12);
-
-  border-color:
-    rgba(255, 255, 255, 0.1);
-
+  background: linear-gradient(105deg, rgba(87, 204, 147, 0.27), rgba(236, 255, 244, 0.10));
+  border-color: rgba(208, 255, 229, 0.25);
   box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.17),
+    0 8px 24px rgba(3, 21, 14, 0.09);
+}
+
+.navigation-link.active::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 5px 5px 0;
+  background: #79efb1;
+  box-shadow: 0 0 12px rgba(121, 239, 177, 0.35);
+}
+
+.navigation-link.active svg {
+  opacity: 1;
+  color: #a0ffd0;
+}
+
+.navigation-link:focus-visible {
+  outline: 2px solid #a0ffd0;
+  outline-offset: 2px;
 }
 
 
@@ -368,51 +369,36 @@ select:focus-visible {
 
 .sidebar-message {
   margin-top: auto;
-
   display: flex;
-
+  align-items: flex-start;
   gap: 11px;
+  padding: 17px 14px;
 
-  padding: 16px;
-
-  color: #b6c7bc;
-
+  color: rgba(225, 245, 231, 0.77);
   background:
-    rgba(255, 255, 255, 0.07);
+    linear-gradient(140deg, rgba(142, 245, 183, 0.10), rgba(255, 255, 255, 0.055));
+  border: 1px solid rgba(230, 255, 240, 0.17);
+  border-radius: 17px;
 
-  border:
-    1px solid rgba(255, 255, 255, 0.11);
-
-  border-radius: 16px;
-
-  backdrop-filter:
-    blur(20px);
-
-  -webkit-backdrop-filter:
-    blur(20px);
-
-  box-shadow:
-    inset 0 1px 0
-      rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11);
 }
 
 .sidebar-message svg {
   flex-shrink: 0;
-
-  color: #4ad295;
+  color: #70ebad;
 }
 
 .sidebar-message strong {
   color: #ffffff;
-
   font-size: 13px;
 }
 
 .sidebar-message p {
   margin: 5px 0 0;
-
   font-size: 11px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 
@@ -2722,7 +2708,7 @@ select:focus-visible {
       var(--text-primary);
 
     background:
-      rgba(238, 246, 242, 0.58);
+      linear-gradient(120deg, rgba(237, 250, 244, 0.70), rgba(221, 241, 245, 0.64));
 
     border-bottom:
       1px solid rgba(255, 255, 255, 0.7);
@@ -2780,10 +2766,10 @@ select:focus-visible {
     overflow: hidden;
 
     background:
-      rgba(13, 28, 19, 0.74);
+      linear-gradient(120deg, rgba(21, 59, 45, 0.82), rgba(8, 36, 32, 0.83));
 
     border:
-      1px solid rgba(255, 255, 255, 0.12);
+      1px solid rgba(224, 255, 234, 0.19);
 
     border-radius: 22px;
 
@@ -2813,15 +2799,15 @@ select:focus-visible {
     gap: 4px;
 
     color:
-      #84948a;
+      rgba(232, 249, 238, 0.64);
 
     font-size: 8px;
     font-weight: 650;
   }
 
   .mobile-navigation-link.active {
-    color:
-      #55d59c;
+    color: #91f2bd;
+    background: rgba(137, 229, 171, 0.11);
   }
 
   .welcome-panel {
