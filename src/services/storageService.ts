@@ -1,3 +1,4 @@
+
 import { STORAGE_CONFIG } from "../data/storageConfig";
 
 import type { StudySession } from "../types/session";
@@ -51,17 +52,13 @@ function isActiveStudyTimer(
     timer.status === "paused";
 
   return (
-    typeof timer.subjectId ===
-      "string" &&
-    typeof timer.startedAt ===
-      "string" &&
+    typeof timer.subjectId === "string" &&
+    typeof timer.startedAt === "string" &&
     validStatus &&
-    typeof timer.totalPausedMs ===
-      "number" &&
+    typeof timer.totalPausedMs === "number" &&
     (
       timer.pausedAt === undefined ||
-      typeof timer.pausedAt ===
-        "string"
+      typeof timer.pausedAt === "string"
     )
   );
 }
@@ -85,45 +82,34 @@ function normalizeStudySession(
 
   if (
     typeof session.id !== "string" ||
-    typeof session.subjectId !==
-      "string" ||
-    typeof session.startedAt !==
-      "string" ||
-    typeof session.endedAt !==
-      "string" ||
-    typeof session.durationMs !==
-      "number" ||
-    typeof session.createdAt !==
-      "string"
+    typeof session.subjectId !== "string" ||
+    typeof session.startedAt !== "string" ||
+    typeof session.endedAt !== "string" ||
+    typeof session.durationMs !== "number" ||
+    typeof session.createdAt !== "string"
   ) {
     return null;
   }
 
   const xpEarned =
-    typeof session.xpEarned ===
-    "number"
+    typeof session.xpEarned === "number"
       ? session.xpEarned
       : 0;
 
   return {
     id: session.id,
 
-    subjectId:
-      session.subjectId,
+    subjectId: session.subjectId,
 
-    startedAt:
-      session.startedAt,
+    startedAt: session.startedAt,
 
-    endedAt:
-      session.endedAt,
+    endedAt: session.endedAt,
 
-    durationMs:
-      session.durationMs,
+    durationMs: session.durationMs,
 
     xpEarned,
 
-    createdAt:
-      session.createdAt,
+    createdAt: session.createdAt,
   };
 }
 
@@ -146,14 +132,10 @@ function normalizeStudySummary(
 
   if (
     typeof summary.id !== "string" ||
-    typeof summary.subjectId !==
-      "string" ||
-    typeof summary.topic !==
-      "string" ||
-    typeof summary.content !==
-      "string" ||
-    typeof summary.createdAt !==
-      "string"
+    typeof summary.subjectId !== "string" ||
+    typeof summary.topic !== "string" ||
+    typeof summary.content !== "string" ||
+    typeof summary.createdAt !== "string"
   ) {
     return null;
   }
@@ -161,23 +143,18 @@ function normalizeStudySummary(
   return {
     id: summary.id,
 
-    subjectId:
-      summary.subjectId,
+    subjectId: summary.subjectId,
 
     sessionId:
-      typeof summary.sessionId ===
-      "string"
+      typeof summary.sessionId === "string"
         ? summary.sessionId
         : undefined,
 
-    topic:
-      summary.topic,
+    topic: summary.topic,
 
-    content:
-      summary.content,
+    content: summary.content,
 
-    createdAt:
-      summary.createdAt,
+    createdAt: summary.createdAt,
   };
 }
 
@@ -206,9 +183,7 @@ function readData(): StudyQuestData {
         parsedData.sessions
       )
         ? parsedData.sessions
-            .map(
-              normalizeStudySession
-            )
+            .map(normalizeStudySession)
             .filter(
               (
                 session
@@ -222,9 +197,7 @@ function readData(): StudyQuestData {
         parsedData.summaries
       )
         ? parsedData.summaries
-            .map(
-              normalizeStudySummary
-            )
+            .map(normalizeStudySummary)
             .filter(
               (
                 summary
@@ -235,15 +208,12 @@ function readData(): StudyQuestData {
 
     return {
       version:
-        typeof parsedData.version ===
-        "number"
+        typeof parsedData.version === "number"
           ? parsedData.version
           : STORAGE_CONFIG.version,
 
       subjects:
-        Array.isArray(
-          parsedData.subjects
-        )
+        Array.isArray(parsedData.subjects)
           ? parsedData.subjects
           : [],
 
@@ -292,16 +262,14 @@ function saveData(
 // SUBJECTS
 // =========================================
 
-function getSubjects():
-  StudySubject[] {
+function getSubjects(): StudySubject[] {
   return readData().subjects;
 }
 
 function saveSubjects(
   subjects: StudySubject[]
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -313,16 +281,14 @@ function saveSubjects(
 // SESSIONS
 // =========================================
 
-function getSessions():
-  StudySession[] {
+function getSessions(): StudySession[] {
   return readData().sessions;
 }
 
 function saveSessions(
   sessions: StudySession[]
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -333,8 +299,7 @@ function saveSessions(
 function addSession(
   session: StudySession
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -350,16 +315,14 @@ function addSession(
 // SUMMARIES
 // =========================================
 
-function getSummaries():
-  StudySummary[] {
+function getSummaries(): StudySummary[] {
   return readData().summaries;
 }
 
 function saveSummaries(
   summaries: StudySummary[]
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -367,11 +330,14 @@ function saveSummaries(
   });
 }
 
+// =========================================
+// ADD SUMMARY
+// =========================================
+
 function addSummary(
   summary: StudySummary
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -383,11 +349,75 @@ function addSummary(
   });
 }
 
+// =========================================
+// UPDATE SUMMARY
+// =========================================
+
+function updateSummary(
+  summaryId: string,
+  updates: Pick<StudySummary, "topic" | "content">
+): boolean {
+  const topic = updates.topic.trim();
+  const content = updates.content.trim();
+
+  // Both fields are required.
+  if (!topic || !content) {
+    return false;
+  }
+
+  const currentData = readData();
+
+  const existingSummary =
+    currentData.summaries.find(
+      (summary) => summary.id === summaryId
+    );
+
+  if (!existingSummary) {
+    return false;
+  }
+
+  const updatedSummaries =
+    currentData.summaries.map(
+      (summary) => {
+        if (summary.id !== summaryId) {
+          return summary;
+        }
+
+        return {
+          ...summary,
+
+          topic,
+          content,
+        };
+      }
+    );
+
+  saveData({
+    ...currentData,
+
+    summaries: updatedSummaries,
+  });
+
+  // Verify that the changes were persisted.
+  const savedSummary =
+    getSummaries().find(
+      (summary) => summary.id === summaryId
+    );
+
+  return (
+    savedSummary?.topic === topic &&
+    savedSummary?.content === content
+  );
+}
+
+// =========================================
+// DELETE SUMMARY
+// =========================================
+
 function deleteSummary(
   summaryId: string
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   const updatedSummaries =
     currentData.summaries.filter(
@@ -398,8 +428,7 @@ function deleteSummary(
   saveData({
     ...currentData,
 
-    summaries:
-      updatedSummaries,
+    summaries: updatedSummaries,
   });
 }
 
@@ -415,8 +444,7 @@ function getActiveTimer():
 function saveActiveTimer(
   timer: ActiveStudyTimer
 ): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -425,8 +453,7 @@ function saveActiveTimer(
 }
 
 function clearActiveTimer(): void {
-  const currentData =
-    readData();
+  const currentData = readData();
 
   saveData({
     ...currentData,
@@ -454,6 +481,8 @@ export const storageService = {
   saveSummaries,
 
   addSummary,
+
+  updateSummary,
 
   deleteSummary,
 

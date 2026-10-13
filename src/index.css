@@ -4196,3 +4196,85 @@ select:focus-visible {
     padding: 20px;
   }
 }
+
+/* =========================================================
+   SUBJECT SUMMARIES — INLINE EDITING
+   ========================================================= */
+
+.subject-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.subject-summary-edit-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.subject-summary-edit-form .form-group {
+  display: grid;
+  gap: 8px;
+}
+
+.subject-summary-edit-form input,
+.subject-summary-edit-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.subject-summary-edit-form textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+
+.subject-summary-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.subject-summary-edit-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.subject-summary-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 42px;
+  padding: 0 16px;
+
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.4);
+
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.subject-summary-cancel:hover {
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-1px);
+}
+
+.subject-summary-cancel:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 3px;
+}
