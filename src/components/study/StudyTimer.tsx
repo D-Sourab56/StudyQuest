@@ -30,6 +30,10 @@ import {
 import StudySummaryForm from "./StudySummaryForm";
 import SubjectSelect from "./SubjectSelect";
 
+import {
+  summaryRecoveryService,
+} from "../../services/summaryRecoveryService";
+
 interface StudyTimerProps {
   subjects: StudySubject[];
 }
@@ -344,15 +348,14 @@ function StudyTimer({
             {/* ================================= */}
 
             <StudySummaryForm
-              key={
-                completedSession.id
-              }
-              session={
-                completedSession
-              }
-              subjectName={
-                completedSubject.name
-              }
+              key={completedSession.id}
+              session={completedSession}
+              subjectName={completedSubject.name}
+              onSaved={() => {
+                summaryRecoveryService.clearPendingSession(
+                  completedSession.id
+                );
+              }}
             />
           </>
         )}

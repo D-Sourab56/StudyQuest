@@ -1,14 +1,14 @@
-import {
-  CheckCircle2,
-} from "lucide-react";
 
-import {
-  useState,
-} from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 
 import {
   storageService,
 } from "../../services/storageService";
+
+import {
+  summaryDraftService,
+} from "../../services/summaryDraftService";
 
 import type {
   StudySession,
@@ -18,14 +18,14 @@ import type {
   StudySummary,
 } from "../../types/summary";
 
+import type {
+  StudySummaryDraft,
+} from "../../services/summaryDraftService";
+
 interface StudySummaryFormProps {
   session: StudySession;
-
   subjectName: string;
-
-  onSaved?: (
-    summary: StudySummary
-  ) => void;
+  onSaved?: (summary: StudySummary) => void;
 }
 
 function StudySummaryForm({
@@ -33,43 +33,70 @@ function StudySummaryForm({
   subjectName,
   onSaved,
 }: StudySummaryFormProps) {
-  const [
-    topic,
-    setTopic,
-  ] = useState("");
+  // =========================================
+  // RESTORE SAVED DRAFT
+  // =========================================
 
-  const [
-    content,
-    setContent,
-  ] = useState("");
+  const [draft, setDraft] =
+    useState<StudySummaryDraft>(
+      () =>
+        summaryDraftService.getDraft(
+          session.id
+        )
+    );
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const { topic, content } = draft;
 
-  const [
-    saved,
-    setSaved,
-  ] = useState(false);
+  const [error, setError] = useState("");
+
+  const [saved, setSaved] = useState(
+    () =>
+      storageService.getSummaries().some(
+        (summary) =>
+          summary.sessionId === session.id
+      )
+  );
+
+  // =========================================
+  // AUTOMATIC DRAFT SAVING
+  // =========================================
+
+  function updateDraft(
+    updatedDraft: StudySummaryDraft
+  ) {
+    setDraft(updatedDraft);
+
+    const savedSuccessfully =
+      summaryDraftService.saveDraft(
+        session.id,
+        updatedDraft
+      );
+
+    setError(
+      savedSuccessfully
+        ? ""
+        : "Could not save your draft locally. Check your browser storage settings."
+    );
+  }
+
+  // =========================================
+  // SAVE FINAL SUMMARY
+  // =========================================
 
   function handleSubmit(
-    event:
-      React.FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    const cleanTopic =
-      topic.trim();
+    if (saved) {
+      return;
+    }
 
-    const cleanContent =
-      content.trim();
+    const cleanTopic = topic.trim();
+    const cleanContent = content.trim();
 
     if (!cleanTopic) {
-      setError(
-        "Please enter what you studied."
-      );
-
+      setError("Please enter what you studied.");
       return;
     }
 
@@ -77,68 +104,85 @@ function StudySummaryForm({
       setError(
         "Please write a short summary of what you learned."
       );
-
       return;
     }
 
-    const summary:
-      StudySummary = {
-        id:
-          crypto.randomUUID(),
+    const summary: StudySummary = {
+      id: crypto.randomUUID(),
 
-        subjectId:
-          session.subjectId,
+      subjectId: session.subjectId,
+      sessionId: session.id,
 
-        sessionId:
-          session.id,
+      topic: cleanTopic,
+      content: cleanContent,
 
-        topic:
-          cleanTopic,
+      createdAt: new Date().toISOString(),
+    };
 
-        content:
-          cleanContent,
+    // Prevent duplicate summaries for this session.
+    const existingSummary =
+      storageService.getSummaries().find(
+        (item) =>
+          item.sessionId === session.id
+      );
 
-        createdAt:
-          new Date().toISOString(),
-      };
+    if (existingSummary) {
+      summaryDraftService.clearDraft(session.id);
+      setSaved(true);
+      setError("");
+      return;
+    }
 
-    storageService.addSummary(
-      summary
-    );
+    // Save the permanent summary first.
+    storageService.addSummary(summary);
+
+    const savedSuccessfully =
+      storageService.getSummaries().some(
+        (item) => item.id === summary.id
+      );
+
+    if (!savedSuccessfully) {
+      setError(
+        "Could not save your summary. Your draft has been kept."
+      );
+      return;
+    }
+
+    // Only remove the draft after a successful save.
+    summaryDraftService.clearDraft(session.id);
 
     setSaved(true);
-
     setError("");
 
-    onSaved?.(
-      summary
-    );
+    onSaved?.(summary);
   }
+
+  // =========================================
+  // SAVED CONFIRMATION
+  // =========================================
 
   if (saved) {
     return (
       <section className="study-summary-saved">
         <div className="study-summary-saved-icon">
-          <CheckCircle2
-            size={22}
-          />
+          <CheckCircle2 size={22} />
         </div>
 
         <div>
-          <strong>
-            Summary saved
-          </strong>
+          <strong>Summary saved</strong>
 
           <p>
-            Your notes for{" "}
-            {subjectName} were
-            added to your learning
-            history.
+            Your notes for {subjectName} were
+            added to your learning history.
           </p>
         </div>
       </section>
     );
   }
+
+  // =========================================
+  // SUMMARY FORM
+  // =========================================
 
   return (
     <section className="study-summary-form-wrapper">
@@ -148,25 +192,23 @@ function StudySummaryForm({
             WHAT DID YOU LEARN?
           </p>
 
-          <h3>
-            Save your study notes
-          </h3>
+          <h3>Save your study notes</h3>
 
           <p>
-            Write the important
-            things you want to
-            remember from this
-            session.
+            Write the important things you
+            want to remember from this session.
+            Your unfinished draft is saved
+            automatically.
           </p>
         </div>
       </div>
 
       <form
         className="study-summary-form"
-        onSubmit={
-          handleSubmit
-        }
+        onSubmit={handleSubmit}
       >
+        {/* TOPIC */}
+
         <div className="form-group">
           <label htmlFor="summary-topic">
             Topic
@@ -176,22 +218,19 @@ function StudySummaryForm({
           <input
             id="summary-topic"
             type="text"
-            value={
-              topic
-            }
+            value={topic}
             maxLength={80}
             placeholder="Example: Java inheritance"
-            onChange={(
-              event
-            ) => {
-              setTopic(
-                event.target.value
-              );
-
-              setError("");
-            }}
+            onChange={(event) =>
+              updateDraft({
+                ...draft,
+                topic: event.target.value,
+              })
+            }
           />
         </div>
+
+        {/* SUMMARY */}
 
         <div className="form-group">
           <label htmlFor="summary-content">
@@ -201,30 +240,24 @@ function StudySummaryForm({
 
           <textarea
             id="summary-content"
-            value={
-              content
-            }
+            value={content}
             maxLength={1500}
             rows={6}
             placeholder="Write what you learned during this study session..."
-            onChange={(
-              event
-            ) => {
-              setContent(
-                event.target.value
-              );
-
-              setError("");
-            }}
+            onChange={(event) =>
+              updateDraft({
+                ...draft,
+                content: event.target.value,
+              })
+            }
           />
         </div>
 
+        {/* FORM FOOTER */}
+
         <div className="study-summary-footer">
           <span className="study-summary-character-count">
-            {
-              content.length
-            }
-            /1500
+            {content.length}/1500
           </span>
 
           <button
@@ -236,7 +269,7 @@ function StudySummaryForm({
         </div>
 
         {error && (
-          <p className="form-error">
+          <p className="form-error" role="alert">
             {error}
           </p>
         )}
