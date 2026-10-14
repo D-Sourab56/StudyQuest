@@ -4983,78 +4983,92 @@ select:focus-visible {
   z-index: 20;
 }
 
+
 /* =========================================================
-   DESKTOP — 859px AND ABOVE
-   Floating dropdown, like Study page
+   HISTORY — CONTAINER-BASED RESPONSIVE DROPDOWN
    ========================================================= */
 
-@media (min-width: 859px) {
+/* Detect available History panel width */
 
-  .history-filters {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
+.history-panel {
+  container-type: inline-size;
+}
 
-  .history-glass-select .subject-select-menu {
-    position: absolute;
+/* Default: two columns with floating menus */
 
-    top: calc(100% + 10px);
-    left: 0;
-    right: auto;
-    bottom: auto;
+.history-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
 
-    transform: none;
+  overflow: visible;
+}
 
-    width: 100%;
-    margin: 0;
+.history-filter-field {
+  position: relative;
+  min-width: 0;
+}
 
-    max-height: min(320px, 50vh);
+.history-filter-field:focus-within {
+  z-index: 30;
+}
 
-    overflow-x: hidden;
-    overflow-y: auto;
+.history-glass-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
 
-    z-index: 100;
-  }
+/* Floating dropdown when there is enough room */
 
-  .history-filter-reset {
-    grid-column: 1 / -1;
-  }
+.history-glass-select .subject-select-menu {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: auto;
+  bottom: auto;
+  left: 0;
+
+  transform: none;
+
+  width: 100%;
+  margin: 0;
+
+  max-height: min(320px, 50vh);
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  z-index: 100;
+}
+
+/* Reset button */
+
+.history-filter-reset {
+  grid-column: 1 / -1;
 }
 
 /* =========================================================
-   MOBILE / NARROW TABLET — 858px AND BELOW
-   Expanding dropdown, no overlap
+   NARROW HISTORY PANEL — EXPANDING DROPDOWN
    ========================================================= */
 
-@media (max-width: 858px) {
+@container (max-width: 600px) {
 
   .history-filters {
     grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .history-filter-field {
-    width: 100%;
-    min-width: 0;
   }
 
   .history-glass-select .subject-select-menu {
     position: static;
 
-    top: auto;
-    right: auto;
-    bottom: auto;
-    left: auto;
-
+    inset: auto;
     transform: none;
 
     width: 100%;
     margin-top: 10px;
 
     max-height: min(250px, 40vh);
-
-    overflow-x: hidden;
-    overflow-y: auto;
   }
 
   .history-filter-reset {
@@ -5062,6 +5076,7 @@ select:focus-visible {
     width: 100%;
   }
 }
+
 
 
 
