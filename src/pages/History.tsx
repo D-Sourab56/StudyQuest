@@ -11,6 +11,12 @@ import {
 
 import { useEffect, useState } from "react";
 
+import HistorySelect from "../components/history/HistorySelect";
+
+import type {
+  HistorySelectOption,
+} from "../components/history/HistorySelect";
+
 import { storageService } from "../services/storageService";
 
 import type { StudySession } from "../types/session";
@@ -45,11 +51,6 @@ interface HistoryPreferences {
   sessions: HistoryFilterState;
 }
 
-interface SubjectOption {
-  id: string;
-  name: string;
-}
-
 // =========================================
 // STORAGE CONFIGURATION
 // =========================================
@@ -65,6 +66,32 @@ const DEFAULT_FILTER: HistoryFilterState = {
   period: "all",
 };
 
+// =========================================
+// TIME PERIOD OPTIONS
+// =========================================
+
+const PERIOD_OPTIONS: HistorySelectOption[] = [
+  {
+    value: "all",
+    label: "All time",
+    description: "Complete study history",
+  },
+  {
+    value: "today",
+    label: "Today",
+    description: "Hourly study activity",
+  },
+  {
+    value: "7days",
+    label: "Last 7 days",
+    description: "Daily study activity",
+  },
+  {
+    value: "30days",
+    label: "Last 30 days",
+    description: "Four study periods",
+  },
+];
 
 // =========================================
 // VALIDATION
@@ -140,8 +167,7 @@ function loadHistoryPreferences(): HistoryPreferences {
       }
     }
 
-    // Restore older preferences if
-    // the new panel settings do not exist.
+    // Restore older History preferences.
 
     const legacy = localStorage.getItem(
       LEGACY_FILTER_KEY
@@ -283,7 +309,7 @@ interface HistoryFiltersProps {
 
   filters: HistoryFilterState;
 
-  subjects: SubjectOption[];
+  subjects: HistorySelectOption[];
 
   onChange: (
     next: HistoryFilterState
@@ -303,81 +329,47 @@ function HistoryFilters({
   return (
     <div className="history-filters">
 
-      {/* SUBJECT FILTER */}
+      {/* ================================= */}
+      {/* SUBJECT GLASS DROPDOWN */}
+      {/* ================================= */}
 
-      <div className="history-filter-field">
-        <label htmlFor={`${prefix}-subject`}>
-          Subject
-        </label>
+      <HistorySelect
+        id={`${prefix}-subject`}
+        label="Subject"
+        type="subject"
+        options={subjects}
+        value={filters.subjectId}
+        onChange={(subjectId) => {
+          onChange({
+            ...filters,
+            subjectId,
+          });
+        }}
+      />
 
-        <select
-          id={`${prefix}-subject`}
-          className="history-filter-select"
-          value={filters.subjectId}
-          onChange={(event) => {
+      {/* ================================= */}
+      {/* TIME PERIOD GLASS DROPDOWN */}
+      {/* ================================= */}
+
+      <HistorySelect
+        id={`${prefix}-period`}
+        label="Time period"
+        type="period"
+        options={PERIOD_OPTIONS}
+        value={filters.period}
+        onChange={(selectedPeriod) => {
+          if (isActivityPeriod(selectedPeriod)) {
             onChange({
               ...filters,
-              subjectId: event.target.value,
+              period: selectedPeriod,
             });
-          }}
-        >
-          <option value="all">
-            All subjects
-          </option>
+          }
+        }}
+      />
 
-          {subjects.map((subject) => (
-            <option
-              key={subject.id}
-              value={subject.id}
-            >
-              {subject.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* TIME PERIOD FILTER */}
-
-      <div className="history-filter-field">
-        <label htmlFor={`${prefix}-period`}>
-          Time period
-        </label>
-
-        <select
-          id={`${prefix}-period`}
-          className="history-filter-select"
-          value={filters.period}
-          onChange={(event) => {
-            const selectedPeriod =
-              event.target.value;
-
-            if (isActivityPeriod(selectedPeriod)) {
-              onChange({
-                ...filters,
-                period: selectedPeriod,
-              });
-            }
-          }}
-        >
-          <option value="all">
-            All time
-          </option>
-
-          <option value="today">
-            Today
-          </option>
-
-          <option value="7days">
-            Last 7 days
-          </option>
-
-          <option value="30days">
-            Last 30 days
-          </option>
-        </select>
-      </div>
-
+      {/* ================================= */}
       {/* CLEAR FILTERS */}
+      {/* ================================= */}
 
       {hasActiveFilters && (
         <button
@@ -390,7 +382,6 @@ function HistoryFilters({
           }
         >
           <RotateCcw size={16} />
-
           Clear filters
         </button>
       )}
@@ -458,8 +449,15 @@ function History() {
     storageService.getSubjects();
 
   // =========================================
-  // SUBJECT NAME LOOKUP
+  // SUBJECT LOOKUP
   // =========================================
+
+  const subjectById = new Map(
+    subjects.map((subject) => [
+      subject.id,
+      subject,
+    ])
+  );
 
   const subjectNames = new Map(
     subjects.map((subject) => [
@@ -469,10 +467,10 @@ function History() {
   );
 
   // =========================================
-  // AVAILABLE SUBJECTS
+  // SUBJECT DROPDOWN OPTIONS
   // =========================================
 
-  const subjectOptions: SubjectOption[] =
+  const savedSubjectOptions: HistorySelectOption[] =
     Array.from(
       new Set(
         sessions.map(
@@ -480,16 +478,35 @@ function History() {
         )
       )
     )
-      .map((subjectId) => ({
-        id: subjectId,
+      .map((subjectId) => {
+        const subject =
+          subjectById.get(subjectId);
 
-        name:
-          subjectNames.get(subjectId) ??
-          "Deleted subject",
-      }))
+        return {
+          value: subjectId,
+
+          label:
+            subject?.name ??
+            "Deleted subject",
+
+          description:
+            subject?.category ??
+            undefined,
+        };
+      })
       .sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.label.localeCompare(b.label)
       );
+
+  const subjectOptions: HistorySelectOption[] = [
+    {
+      value: "all",
+      label: "All subjects",
+      description: "Every study subject",
+    },
+
+    ...savedSubjectOptions,
+  ];
 
   // =========================================
   // INDEPENDENT FILTER RESULTS
@@ -581,9 +598,9 @@ function History() {
   // AUTOMATIC ACTIVITY GROUPING
   // =========================================
 
-  // Today        -> Daily
+  // Today        -> Hourly
   // Last 7 days  -> Daily
-  // Last 30 days -> Weekly
+  // Last 30 days -> Four weekly summaries
   // All time     -> Monthly
 
   const activityView: ActivityView =
@@ -763,7 +780,6 @@ function History() {
               <small> XP</small>
             </strong>
           </div>
-
         </div>
       </section>
 
@@ -853,8 +869,10 @@ function History() {
                     bucket.durationMs > 0
                       ? Math.max(
                           6,
-                          (bucket.durationMs /
-                            maxActivityDuration) * 100
+                          (
+                            bucket.durationMs /
+                            maxActivityDuration
+                          ) * 100
                         )
                       : 0;
 
@@ -1023,7 +1041,6 @@ function History() {
               }
             >
               <RotateCcw size={16} />
-
               Clear filters
             </button>
           </div>
@@ -1093,7 +1110,6 @@ function History() {
           </div>
         )}
       </section>
-
     </div>
   );
 }

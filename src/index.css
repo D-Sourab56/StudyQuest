@@ -3428,6 +3428,28 @@ select:focus-visible {
   position: relative;
   z-index: 1;
 }
+
+/* =========================================================
+   SUBJECT SUMMARIES
+   ========================================================= */
+
+.subject-summaries-panel {
+  padding: 22px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.32
+    );
+
+  border:
+    1px solid
+    var(--glass-border-soft);
+
+  border-radius: 22px;
+}
 /* =========================================================
    STUDY SUMMARY
    ========================================================= */
@@ -3612,27 +3634,6 @@ select:focus-visible {
 
   font-size: 12px;
   line-height: 1.5;
-}
-/* =========================================================
-   SUBJECT SUMMARIES
-   ========================================================= */
-
-.subject-summaries-panel {
-  padding: 22px;
-
-  background:
-    rgba(
-      255,
-      255,
-      255,
-      0.32
-    );
-
-  border:
-    1px solid
-    var(--glass-border-soft);
-
-  border-radius: 22px;
 }
 
 
@@ -4448,28 +4449,6 @@ select:focus-visible {
   font-weight: 650;
 }
 
-.history-filter-select {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.65);
-
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
-
-  font: inherit;
-  font-size: 13px;
-
-  cursor: pointer;
-}
-
-.history-filter-select:focus-visible {
-  outline: 2px solid var(--accent-dark);
-  outline-offset: 2px;
-}
-
 .history-filter-reset {
   display: inline-flex;
   align-items: center;
@@ -4519,6 +4498,105 @@ select:focus-visible {
     width: 100%;
   }
 }
+
+
+/* =========================================================
+   HISTORY — GLASS DROPDOWN INTEGRATION
+   ========================================================= */
+
+/* Allow dropdowns to appear above panels */
+
+.history-panel {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* Bring the active panel forward */
+
+.history-panel:focus-within {
+  z-index: 20;
+}
+
+/* Keep the active dropdown above other fields */
+
+.history-filter-field {
+  position: relative;
+}
+
+.history-filter-field:focus-within {
+  z-index: 30;
+}
+
+.history-filters {
+  position: relative;
+  overflow: visible;
+}
+
+/* Reuse the Study page dropdown design */
+
+.history-glass-select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Prevent excessively long option menus */
+
+.history-glass-select .subject-select-menu {
+  max-height: min(320px, 50vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(31, 90, 62, 0.24)
+    transparent;
+}
+
+/* Accessible keyboard focus */
+
+.history-glass-select .subject-select-option:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: -2px;
+
+  background: rgba(209, 243, 228, 0.55);
+}
+
+/* MOBILE */
+
+@media (max-width: 820px) {
+
+  /* Stack filters vertically */
+
+  .history-filters {
+    align-items: stretch;
+    overflow: visible;
+  }
+
+  .history-filters > .history-filter-field {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Expand menu without overlapping fields */
+
+  .history-glass-select .subject-select-menu {
+    position: static;
+
+    top: auto;
+    left: auto;
+
+    width: 100%;
+    margin-top: 8px;
+
+    max-height: 240px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+
 
 /* =========================================================
    HISTORY — LEARNING STATISTICS
@@ -4626,224 +4704,6 @@ select:focus-visible {
     font-size: 20px;
   }
 }
-
-/* =========================================================
-   DASHBOARD — WEEKLY STUDY ACTIVITY
-   ========================================================= */
-
-.dashboard-activity-chart {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  align-items: end;
-  gap: 10px;
-
-  margin-top: 24px;
-}
-
-.dashboard-activity-day {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-
-  min-width: 0;
-}
-
-.dashboard-activity-bar-track {
-  display: flex;
-  align-items: flex-end;
-
-  width: 100%;
-  max-width: 38px;
-  height: 130px;
-
-  overflow: hidden;
-
-  background: rgba(31, 90, 62, 0.06);
-  border-radius: 12px;
-}
-
-.dashboard-activity-bar {
-  width: 100%;
-  min-height: 0;
-
-  background: linear-gradient(
-    180deg,
-    #46bd91,
-    #16865e
-  );
-
-  border-radius: 10px 10px 0 0;
-
-  transition: height 250ms ease;
-}
-
-.dashboard-activity-day-label {
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.dashboard-activity-day-label.is-today {
-  color: var(--accent-dark);
-  font-weight: 800;
-}
-
-.dashboard-activity-total {
-  margin: 18px 0 0;
-
-  color: var(--text-secondary);
-  font-size: 12px;
-  text-align: center;
-}
-
-
-/* =========================================================
-   DASHBOARD — RECENT STUDY SESSIONS
-   ========================================================= */
-
-.dashboard-recent-list {
-  display: grid;
-  gap: 12px;
-
-  margin-top: 20px;
-  padding: 0 30px;
-}
-
-.dashboard-recent-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-
-  padding: 18px 20px;
-
-  background: rgba(255, 255, 255, 0.38);
-
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-radius: 14px;
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 4px 14px rgba(31, 90, 62, 0.04);
-
-  transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.dashboard-recent-item:hover {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(55, 177, 118, 0.25);
-  transform: translateY(-1px);
-}
-
-/* SUBJECT AND DATE */
-
-.dashboard-recent-main {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-
-  min-width: 0;
-}
-
-.dashboard-recent-main strong {
-  font-size: 14px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.dashboard-recent-main time {
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-
-/* SESSION DURATION AND XP */
-
-.dashboard-recent-metrics {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.dashboard-recent-metrics span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.dashboard-recent-metrics .dashboard-recent-xp {
-  color: var(--accent-dark);
-}
-
-/* VIEW ALL HISTORY */
-
-.dashboard-recent-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  margin: 20px 30px 30px;
-
-  color: var(--accent-dark);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-
-  transition:
-    gap 180ms ease,
-    color 180ms ease;
-}
-
-.dashboard-recent-link:hover {
-  gap: 12px;
-  text-decoration: none;
-}
-
-.dashboard-recent-link:focus-visible {
-  outline: 2px solid var(--accent-dark);
-  outline-offset: 4px;
-}
-
-/* =========================================================
-   DASHBOARD — MOBILE
-   ========================================================= */
-
-@media (max-width: 520px) {
-  .dashboard-activity-chart {
-    gap: 5px;
-  }
-
-  .dashboard-activity-bar-track {
-    height: 100px;
-  }
-
-  .dashboard-recent-list {
-    gap: 10px;
-    padding: 0 18px;
-  }
-
-  .dashboard-recent-item {
-    padding: 14px;
-  }
-
-  .dashboard-recent-metrics {
-    gap: 10px;
-  }
-
-  .dashboard-recent-link {
-    margin: 18px 18px 24px;
-  }
-}
-
 
 /* =========================================================
    HISTORY — STUDY ACTIVITY CHART
@@ -5089,5 +4949,335 @@ select:focus-visible {
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
+  }
+}
+
+
+/* =========================================================
+   HISTORY — RESPONSIVE DROPDOWN BEHAVIOR
+   ========================================================= */
+
+/* Keep dropdown positioning independent
+   from the Study page selector */
+
+.history-glass-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.history-filters {
+  overflow: visible;
+}
+
+.history-filter-field {
+  position: relative;
+  min-width: 0;
+}
+
+.history-filter-field:focus-within {
+  z-index: 30;
+}
+
+.history-panel:focus-within {
+  z-index: 20;
+}
+
+/* =========================================================
+   DESKTOP — 859px AND ABOVE
+   Floating dropdown, like Study page
+   ========================================================= */
+
+@media (min-width: 859px) {
+
+  .history-filters {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .history-glass-select .subject-select-menu {
+    position: absolute;
+
+    top: calc(100% + 10px);
+    left: 0;
+    right: auto;
+    bottom: auto;
+
+    transform: none;
+
+    width: 100%;
+    margin: 0;
+
+    max-height: min(320px, 50vh);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    z-index: 100;
+  }
+
+  .history-filter-reset {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================
+   MOBILE / NARROW TABLET — 858px AND BELOW
+   Expanding dropdown, no overlap
+   ========================================================= */
+
+@media (max-width: 858px) {
+
+  .history-filters {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .history-filter-field {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .history-glass-select .subject-select-menu {
+    position: static;
+
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+
+    transform: none;
+
+    width: 100%;
+    margin-top: 10px;
+
+    max-height: min(250px, 40vh);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .history-filter-reset {
+    grid-column: 1;
+    width: 100%;
+  }
+}
+
+
+
+/* =========================================================
+   DASHBOARD — WEEKLY STUDY ACTIVITY
+   ========================================================= */
+
+.dashboard-activity-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+.dashboard-activity-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.dashboard-activity-bar-track {
+  display: flex;
+  align-items: flex-end;
+
+  width: 100%;
+  max-width: 38px;
+  height: 130px;
+
+  overflow: hidden;
+
+  background: rgba(31, 90, 62, 0.06);
+  border-radius: 12px;
+}
+
+.dashboard-activity-bar {
+  width: 100%;
+  min-height: 0;
+
+  background: linear-gradient(
+    180deg,
+    #46bd91,
+    #16865e
+  );
+
+  border-radius: 10px 10px 0 0;
+
+  transition: height 250ms ease;
+}
+
+.dashboard-activity-day-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dashboard-activity-day-label.is-today {
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.dashboard-activity-total {
+  margin: 18px 0 0;
+
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+
+/* =========================================================
+   DASHBOARD — RECENT STUDY SESSIONS
+   ========================================================= */
+
+.dashboard-recent-list {
+  display: grid;
+  gap: 12px;
+
+  margin-top: 20px;
+  padding: 0 30px;
+}
+
+.dashboard-recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 18px 20px;
+
+  background: rgba(255, 255, 255, 0.38);
+
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 4px 14px rgba(31, 90, 62, 0.04);
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.dashboard-recent-item:hover {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(55, 177, 118, 0.25);
+  transform: translateY(-1px);
+}
+
+/* SUBJECT AND DATE */
+
+.dashboard-recent-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  min-width: 0;
+}
+
+.dashboard-recent-main strong {
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-recent-main time {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* SESSION DURATION AND XP */
+
+.dashboard-recent-metrics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-recent-metrics span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-recent-metrics .dashboard-recent-xp {
+  color: var(--accent-dark);
+}
+
+/* VIEW ALL HISTORY */
+
+.dashboard-recent-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 20px 30px 30px;
+
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition:
+    gap 180ms ease,
+    color 180ms ease;
+}
+
+.dashboard-recent-link:hover {
+  gap: 12px;
+  text-decoration: none;
+}
+
+.dashboard-recent-link:focus-visible {
+  outline: 2px solid var(--accent-dark);
+  outline-offset: 4px;
+}
+
+/* =========================================================
+   DASHBOARD — MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+  .dashboard-activity-chart {
+    gap: 5px;
+  }
+
+  .dashboard-activity-bar-track {
+    height: 100px;
+  }
+
+  .dashboard-recent-list {
+    gap: 10px;
+    padding: 0 18px;
+  }
+
+  .dashboard-recent-item {
+    padding: 14px;
+  }
+
+  .dashboard-recent-metrics {
+    gap: 10px;
+  }
+
+  .dashboard-recent-link {
+    margin: 18px 18px 24px;
   }
 }
