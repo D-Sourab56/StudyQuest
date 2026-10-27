@@ -51,6 +51,267 @@
     cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* =========================================================
+   SETTINGS — APPEARANCE SELECTOR
+   ========================================================= */
+
+.settings-theme-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.settings-theme-option {
+  min-width: 0;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.settings-theme-option:hover {
+  color: var(--text-primary);
+  background: var(--glass-hover);
+  transform: translateY(-1px);
+}
+
+.settings-theme-option.active {
+  color: var(--accent-dark);
+  background: rgba(218, 249, 233, 0.66);
+  border-color: rgba(21, 155, 104, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.settings-theme-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.settings-theme-option > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.settings-theme-option strong,
+.settings-theme-option small {
+  display: block;
+}
+
+.settings-theme-option strong {
+  color: inherit;
+  font-size: 14px;
+}
+
+.settings-theme-option small {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 520px) {
+  .settings-theme-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   DARK THEME
+   ========================================================= */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  color: #e8f3ed;
+  background: #09120e;
+
+  --text-primary: #edf7f1;
+  --text-secondary: #b1c2b8;
+  --text-muted: #81958a;
+
+  --accent: #55d9a0;
+  --accent-dark: #7be8b3;
+  --danger: #ff8f8f;
+
+  --glass: rgba(20, 38, 29, 0.7);
+  --glass-strong: rgba(27, 49, 38, 0.82);
+  --glass-hover: rgba(38, 65, 51, 0.82);
+  --glass-border: rgba(190, 241, 213, 0.14);
+  --glass-border-soft: rgba(190, 241, 213, 0.09);
+  --glass-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+  --glass-shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+html[data-theme="dark"] body {
+  color: var(--text-primary);
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(41, 166, 112, 0.18),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 82% 12%,
+      rgba(48, 102, 151, 0.17),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 72% 78%,
+      rgba(42, 139, 103, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(145deg, #0b1711 0%, #0c1817 52%, #0a1310 100%);
+}
+
+html[data-theme="dark"] .app-main,
+html[data-theme="dark"] .page-container {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .page-header h1,
+html[data-theme="dark"] .panel-heading h2,
+html[data-theme="dark"] .section-heading-row h2,
+html[data-theme="dark"] .subject-section-heading h2,
+html[data-theme="dark"] .welcome-content h2,
+html[data-theme="dark"] .empty-state h2,
+html[data-theme="dark"] .empty-state h3,
+html[data-theme="dark"] .subject-card h3,
+html[data-theme="dark"] .history-session-subject {
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] .page-description,
+html[data-theme="dark"] .stat-helper,
+html[data-theme="dark"] .welcome-content p,
+html[data-theme="dark"] .empty-state p {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .subject-card,
+html[data-theme="dark"] .history-stat-card,
+html[data-theme="dark"] .history-session-card,
+html[data-theme="dark"] .dashboard-recent-item,
+html[data-theme="dark"] .subject-stat-card {
+  background: var(--glass);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    var(--glass-shadow);
+}
+
+html[data-theme="dark"] .history-session-card:hover,
+html[data-theme="dark"] .dashboard-recent-item:hover,
+html[data-theme="dark"] .subject-card:hover {
+  background: var(--glass-hover);
+  border-color: rgba(85, 217, 160, 0.26);
+}
+
+html[data-theme="dark"] .stat-icon,
+html[data-theme="dark"] .history-stat-icon,
+html[data-theme="dark"] .empty-state-icon,
+html[data-theme="dark"] .subject-icon,
+html[data-theme="dark"] .subject-page-letter {
+  color: var(--accent-dark);
+  background: rgba(54, 145, 103, 0.16);
+  border-color: rgba(126, 226, 176, 0.12);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+html[data-theme="dark"] .subject-select-trigger {
+  color: var(--text-primary);
+  background: rgba(7, 18, 12, 0.56);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #708279;
+}
+
+html[data-theme="dark"] .subject-select-menu {
+  color: var(--text-primary);
+  background: rgba(15, 31, 23, 0.98);
+  border-color: var(--glass-border);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.42);
+}
+
+html[data-theme="dark"] .subject-select-option:hover,
+html[data-theme="dark"] .subject-select-option.active {
+  background: rgba(85, 217, 160, 0.12);
+}
+
+html[data-theme="dark"] .history-filters,
+html[data-theme="dark"] .history-session-metric,
+html[data-theme="dark"] .coming-soon-note,
+html[data-theme="dark"] .subject-page-empty {
+  background: rgba(8, 20, 13, 0.34);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .history-session-metric--xp,
+html[data-theme="dark"] .history-filter-reset,
+html[data-theme="dark"] .settings-theme-option.active {
+  color: var(--accent-dark);
+  background: rgba(44, 137, 93, 0.2);
+  border-color: rgba(85, 217, 160, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"] .progress-track,
+html[data-theme="dark"] .history-activity-bar-track,
+html[data-theme="dark"] .dashboard-activity-bar-track {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme="dark"] .mobile-header {
+  color: var(--text-primary);
+  background: rgba(10, 24, 17, 0.82);
+  border-bottom-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .primary-button {
+  color: #07140d;
+  background: #69dda7;
+}
+
+html[data-theme="dark"] .primary-button:hover {
+  background: #84e9ba;
+}
+
+html[data-theme="dark"] .secondary-button,
+html[data-theme="dark"] .icon-button,
+html[data-theme="dark"] .subject-action-button {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .settings-theme-option {
+  color: var(--text-secondary);
+  background: rgba(6, 17, 11, 0.35);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .settings-theme-option:hover {
+  color: var(--text-primary);
+  background: var(--glass-hover);
+}
+
 
 /* =========================================================
    RESET
@@ -5382,4 +5643,174 @@ select:focus-visible {
     padding-inline: 1px;
     border-radius: 15px;
   }
+}
+
+/* =========================================================
+   S11-A — LIGHT / DARK THEME CONTRAST POLISH
+   Keeps existing components, layout, and localStorage untouched.
+   ========================================================= */
+
+/* Keep native inputs in the selected light mode and improve small text contrast. */
+:root {
+  color-scheme: light;
+  --text-muted: #607168;
+}
+
+/* Improve readability of native form placeholders in dark mode. */
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #9caf9f;
+}
+
+/* Dark surfaces that previously retained light-mode backgrounds. */
+html[data-theme="dark"] .study-timer-panel {
+  background: var(--glass-strong);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    var(--glass-shadow);
+}
+
+html[data-theme="dark"] .subject-summaries-panel,
+html[data-theme="dark"] .study-summary-form-wrapper {
+  background: rgba(11, 27, 19, 0.48);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .subject-summary-card,
+html[data-theme="dark"] .subject-summary-empty {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .subject-summary-card:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(85, 217, 160, 0.26);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+/* Form labels and focused fields must remain legible. */
+html[data-theme="dark"] .form-group label {
+  color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .form-group input:focus,
+html[data-theme="dark"] .study-summary-form textarea:focus {
+  color: var(--text-primary);
+  background: rgba(8, 20, 14, 0.8);
+  border-color: rgba(85, 217, 160, 0.58);
+  box-shadow: 0 0 0 4px rgba(85, 217, 160, 0.12);
+}
+
+/* Controls, chips, and status badges inside dark panels. */
+html[data-theme="dark"] .timer-status,
+html[data-theme="dark"] .subject-summary-count,
+html[data-theme="dark"] .subject-summary-cancel,
+html[data-theme="dark"] .subject-summary-delete {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.055);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .subject-summary-cancel:hover {
+  color: var(--text-primary);
+  background: var(--glass-hover);
+}
+
+html[data-theme="dark"] .subject-page-back {
+  color: var(--accent-dark);
+  background: rgba(255, 255, 255, 0.055);
+  border-color: var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="dark"] .subject-page-back:hover {
+  color: var(--accent-dark);
+  background: rgba(85, 217, 160, 0.12);
+  border-color: rgba(85, 217, 160, 0.28);
+}
+
+html[data-theme="dark"] .subject-select-letter,
+html[data-theme="dark"] .subject-summary-empty-icon,
+html[data-theme="dark"] .timer-complete-icon {
+  color: var(--accent-dark);
+  background: rgba(85, 217, 160, 0.14);
+  border-color: rgba(85, 217, 160, 0.18);
+}
+
+html[data-theme="dark"] .subject-select-option.selected,
+html[data-theme="dark"] .history-glass-select .subject-select-option:focus-visible {
+  color: var(--accent-dark);
+  background: rgba(85, 217, 160, 0.15);
+  border-color: rgba(85, 217, 160, 0.22);
+}
+
+html[data-theme="dark"] .study-summary-saved,
+html[data-theme="dark"] .timer-complete-preview {
+  background: rgba(40, 127, 82, 0.18);
+  border-color: rgba(85, 217, 160, 0.23);
+}
+
+html[data-theme="dark"] .subject-session-duration {
+  color: var(--accent-dark) !important;
+  background: rgba(85, 217, 160, 0.12);
+  border-color: rgba(85, 217, 160, 0.2);
+}
+
+/* Preserve separation without bright white dividers. */
+html[data-theme="dark"] .progress-track {
+  border-color: var(--glass-border-soft);
+}
+
+html[data-theme="dark"] .subject-session-row {
+  border-bottom-color: var(--glass-border-soft);
+}
+
+html[data-theme="dark"] .subject-summary-content,
+html[data-theme="dark"] .subject-open-button {
+  border-top-color: var(--glass-border-soft);
+}
+
+/* Danger actions should be visible without glowing white/pink panels. */
+html[data-theme="dark"] .finish-session-button {
+  color: #ffb1b1;
+  background: rgba(150, 50, 60, 0.16);
+  border-color: rgba(255, 143, 143, 0.27);
+}
+
+html[data-theme="dark"] .finish-session-button:hover,
+html[data-theme="dark"] .subject-action-button.danger:hover,
+html[data-theme="dark"] .subject-summary-delete:hover {
+  color: #ffb1b1;
+  background: rgba(150, 50, 60, 0.24);
+  border-color: rgba(255, 143, 143, 0.36);
+}
+
+html[data-theme="dark"] .subject-action-button:hover {
+  color: var(--text-primary);
+  background: var(--glass-hover);
+  border-color: var(--glass-border);
+}
+
+html[data-theme="dark"] .stat-card::after {
+  background: rgba(85, 217, 160, 0.07);
+}
+
+html[data-theme="dark"] .stat-card:hover {
+  background: var(--glass-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    var(--glass-shadow-hover);
+}
+
+/* Make keyboard focus visible on dark glass surfaces. */
+html[data-theme="dark"] button:focus-visible,
+html[data-theme="dark"] a:focus-visible,
+html[data-theme="dark"] input:focus-visible,
+html[data-theme="dark"] textarea:focus-visible,
+html[data-theme="dark"] select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }

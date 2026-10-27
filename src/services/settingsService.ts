@@ -1,11 +1,15 @@
+export type StudyTheme = "light" | "dark";
+
 export interface StudySettings {
   displayName: string;
   dailyGoalMinutes: number;
+  theme: StudyTheme;
 }
 
 export const DEFAULT_SETTINGS: StudySettings = {
   displayName: "",
   dailyGoalMinutes: 30,
+  theme: "light",
 };
 
 export const SETTINGS_LIMITS = {
@@ -35,6 +39,10 @@ function isValidDailyGoal(value: unknown): value is number {
   );
 }
 
+function isStudyTheme(value: unknown): value is StudyTheme {
+  return value === "light" || value === "dark";
+}
+
 function getSettings(): StudySettings {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
@@ -62,6 +70,10 @@ function getSettings(): StudySettings {
       )
         ? parsed.dailyGoalMinutes
         : DEFAULT_SETTINGS.dailyGoalMinutes,
+
+      theme: isStudyTheme(parsed.theme)
+        ? parsed.theme
+        : DEFAULT_SETTINGS.theme,
     };
   } catch (error) {
     console.error("Could not load study settings:", error);
@@ -74,7 +86,8 @@ function saveSettings(settings: StudySettings): boolean {
 
   if (
     displayName.length > SETTINGS_LIMITS.displayNameLength ||
-    !isValidDailyGoal(settings.dailyGoalMinutes)
+    !isValidDailyGoal(settings.dailyGoalMinutes) ||
+    !isStudyTheme(settings.theme)
   ) {
     return false;
   }
@@ -82,6 +95,7 @@ function saveSettings(settings: StudySettings): boolean {
   const nextSettings: StudySettings = {
     displayName,
     dailyGoalMinutes: settings.dailyGoalMinutes,
+    theme: settings.theme,
   };
 
   try {

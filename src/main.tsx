@@ -12,7 +12,20 @@ import {
   StudyTimerProvider,
 } from "./context/StudyTimerContext";
 
+import {
+  settingsService,
+} from "./services/settingsService";
+
 import "./index.css";
+
+// Apply the saved appearance before the app is painted.
+const initialSettings = settingsService.getSettings();
+
+document.documentElement.dataset.theme =
+  initialSettings.theme;
+
+document.documentElement.style.colorScheme =
+  initialSettings.theme;
 
 ReactDOM.createRoot(
   document.getElementById(

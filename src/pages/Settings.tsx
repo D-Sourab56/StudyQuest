@@ -1,10 +1,20 @@
-import { Save, Settings as SettingsIcon } from "lucide-react";
+import {
+  Moon,
+  Save,
+  Settings as SettingsIcon,
+  Sun,
+} from "lucide-react";
+
 import { useState } from "react";
 import type { FormEvent } from "react";
 
 import {
   SETTINGS_LIMITS,
   settingsService,
+} from "../services/settingsService";
+
+import type {
+  StudyTheme,
 } from "../services/settingsService";
 
 function Settings() {
@@ -20,16 +30,26 @@ function Settings() {
     String(savedSettings.dailyGoalMinutes)
   );
 
+  const [theme, setTheme] = useState<StudyTheme>(
+    savedSettings.theme
+  );
+
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const hasChanges =
     displayName.trim() !== savedSettings.displayName ||
-    dailyGoal !== String(savedSettings.dailyGoalMinutes);
+    dailyGoal !== String(savedSettings.dailyGoalMinutes) ||
+    theme !== savedSettings.theme;
 
   function clearFeedback() {
     setError("");
     setMessage("");
+  }
+
+  function selectTheme(nextTheme: StudyTheme) {
+    setTheme(nextTheme);
+    clearFeedback();
   }
 
   function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -59,6 +79,7 @@ function Settings() {
     const nextSettings = {
       displayName: cleanName,
       dailyGoalMinutes: goalMinutes,
+      theme,
     };
 
     if (!settingsService.saveSettings(nextSettings)) {
@@ -67,6 +88,8 @@ function Settings() {
       );
       return;
     }
+
+    document.documentElement.dataset.theme = theme;
 
     setSavedSettings(nextSettings);
     setDisplayName(cleanName);
@@ -77,6 +100,7 @@ function Settings() {
   function handleCancel() {
     setDisplayName(savedSettings.displayName);
     setDailyGoal(String(savedSettings.dailyGoalMinutes));
+    setTheme(savedSettings.theme);
     clearFeedback();
   }
 
@@ -200,10 +224,65 @@ function Settings() {
                 lineHeight: 1.6,
               }}
             >
-              Choose a realistic target for each day. You can
-              change it whenever your routine changes.
+              Choose a realistic target for each day.
             </p>
           </div>
+
+          <fieldset
+            style={{
+              margin: 0,
+              padding: 0,
+              border: 0,
+              minWidth: 0,
+            }}
+          >
+            <legend
+              style={{
+                marginBottom: 10,
+                color: "var(--text-primary)",
+                fontSize: 13,
+                fontWeight: 650,
+              }}
+            >
+              Appearance
+            </legend>
+
+            <div className="settings-theme-options">
+              <button
+                type="button"
+                className={
+                  theme === "light"
+                    ? "settings-theme-option active"
+                    : "settings-theme-option"
+                }
+                aria-pressed={theme === "light"}
+                onClick={() => selectTheme("light")}
+              >
+                <Sun size={20} aria-hidden="true" />
+                <span>
+                  <strong>Light</strong>
+                  <small>Bright glass interface</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={
+                  theme === "dark"
+                    ? "settings-theme-option active"
+                    : "settings-theme-option"
+                }
+                aria-pressed={theme === "dark"}
+                onClick={() => selectTheme("dark")}
+              >
+                <Moon size={20} aria-hidden="true" />
+                <span>
+                  <strong>Dark</strong>
+                  <small>Dim glass interface</small>
+                </span>
+              </button>
+            </div>
+          </fieldset>
 
           {error && (
             <p
