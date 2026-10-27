@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Link } from "react-router";
+import { settingsService } from "../services/settingsService";
 
 import {
   ROUTES,
@@ -32,8 +33,7 @@ import {
 // CONFIGURATION
 // =========================================
 
-const WEEKLY_GOAL_MS =
-  10 * 60 * 60 * 1000;
+
 
 // =========================================
 // FORMAT DURATION
@@ -206,6 +206,8 @@ function formatSessionDate(
 // =========================================
 
 function Dashboard() {
+  const settings = settingsService.getSettings();
+  const dailyGoalMs = settings.dailyGoalMinutes * 60_000;
   // =========================================
   // SAVED DATA
   // =========================================
@@ -306,12 +308,10 @@ function Dashboard() {
       0
     );
 
-  const weeklyProgressPercent =
-    Math.min(
-      100,
-      (weekDurationMs / WEEKLY_GOAL_MS) *
-        100
-    );
+  const dailyProgressPercent = Math.min(
+    100,
+    (todayDurationMs / dailyGoalMs) * 100
+  );
 
   // =========================================
   // WEEKLY ACTIVITY CHART
@@ -363,7 +363,11 @@ function Dashboard() {
             OVERVIEW
           </p>
 
-          <h1>Welcome back.</h1>
+          <h1 style={{ overflowWrap: "anywhere" }}>
+            {settings.displayName
+              ? `Welcome back, ${settings.displayName}.`
+              : "Welcome back."}
+          </h1>
 
           <p className="page-description">
             Every study session moves your
@@ -409,20 +413,19 @@ function Dashboard() {
 
           <div className="stat-card-content">
             <p className="stat-label">
-              Weekly Goal
+              Daily Goal
             </p>
 
             <h2>
-              {formatDuration(weekDurationMs)}
-              {" / 10h"}
+              {formatDuration(todayDurationMs)}{" / "}{formatDuration(dailyGoalMs)}
             </h2>
 
             <div
               className="progress-track"
               role="progressbar"
-              aria-label="Weekly study goal"
+              aria-label="Daily study goal"
               aria-valuenow={Math.round(
-                weeklyProgressPercent
+                dailyProgressPercent
               )}
               aria-valuemin={0}
               aria-valuemax={100}
@@ -431,15 +434,15 @@ function Dashboard() {
                 className="progress-fill"
                 style={{
                   width:
-                    `${weeklyProgressPercent}%`,
+                    `${dailyProgressPercent}%`,
                 }}
               />
             </div>
 
             <p className="stat-helper">
               {Math.round(
-                weeklyProgressPercent
-              )}% of weekly goal
+                dailyProgressPercent
+              )}% of daily goal
             </p>
           </div>
         </article>
