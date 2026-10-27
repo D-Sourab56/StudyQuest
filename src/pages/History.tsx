@@ -394,6 +394,7 @@ function HistoryFilters({
 // =========================================
 
 function History() {
+  const [sessionLimit, setSessionLimit] = useState(3);
   // =========================================
   // INDEPENDENT FILTER STATES
   // =========================================
@@ -403,8 +404,7 @@ function History() {
       loadHistoryPreferences
     );
 
-  const overviewFilters =
-    preferences.overview;
+  const overviewFilters = DEFAULT_FILTER;
 
   const activityFilters =
     preferences.activity;
@@ -413,6 +413,10 @@ function History() {
     preferences.sessions;
 
   // =========================================
+  // Reset the visible list when its filters change.
+  useEffect(() => {
+    setSessionLimit(3);
+  }, [sessionFilters.subjectId, sessionFilters.period]);
   // SAVE FILTER PREFERENCES
   // =========================================
 
@@ -685,30 +689,6 @@ function History() {
             <h2>Your Progress</h2>
           </div>
         </div>
-
-        {/* OVERVIEW FILTERS */}
-
-        <HistoryFilters
-          prefix="overview"
-          filters={overviewFilters}
-          subjects={subjectOptions}
-          onChange={(next) =>
-            setPreferences((current) => ({
-              ...current,
-              overview: next,
-            }))
-          }
-        />
-
-        {/* MATCHING SESSIONS */}
-
-        <p className="history-filter-results">
-          {overviewSessions.length} matching{" "}
-          {overviewSessions.length === 1
-            ? "session"
-            : "sessions"}{" "}
-          in this overview.
-        </p>
 
         {/* ================================= */}
         {/* OVERVIEW STATISTICS */}
@@ -990,9 +970,9 @@ function History() {
         {/* RESULT COUNT */}
 
         <p className="history-filter-results">
-          Showing {filteredSessions.length} of{" "}
-          {sessions.length} saved{" "}
-          {sessions.length === 1
+          Showing {Math.min(sessionLimit, filteredSessions.length)} of{" "}
+          {filteredSessions.length} matching{" "}
+          {filteredSessions.length === 1
             ? "session"
             : "sessions"}.
         </p>
@@ -1045,8 +1025,8 @@ function History() {
             </button>
           </div>
         ) : (
-          <div className="history-session-list">
-            {filteredSessions.map((session) => {
+          <div className="history-session-list" id="history-session-list">
+            {filteredSessions.slice(0, sessionLimit).map((session) => {
               const subjectName =
                 subjectNames.get(
                   session.subjectId
@@ -1104,9 +1084,135 @@ function History() {
                       +{earnedXP} XP
                     </span>
                   </div>
+
+                  {/* Expandable details use native keyboard-accessible disclosure. */}
+                  <details
+                    className="history-session-details"
+                    style={{ marginTop: 16 }}
+                  >
+                    <summary
+                      style={{
+                        width: "fit-content",
+                        maxWidth: "100%",
+                        padding: "10px 12px",
+                        color: "var(--accent-dark)",
+                        background: "rgba(222, 249, 237, 0.66)",
+                        border: "1px solid var(--glass-border)",
+                        borderRadius: 10,
+                        fontSize: 13,
+                        fontWeight: 650,
+                        cursor: "pointer",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      Session details
+                      <span style={{
+                        position: "absolute",
+                        width: 1,
+                        height: 1,
+                        padding: 0,
+                        margin: -1,
+                        overflow: "hidden",
+                        clipPath: "inset(50%)",
+                        whiteSpace: "nowrap",
+                      }}>
+                        {" "}for {subjectName}, {formatDate(session.endedAt)}
+                      </span>
+                    </summary>
+
+                    <dl
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
+                        gap: 18,
+                        margin: "16px 0 0",
+                        padding: 16,
+                        background: "rgba(255, 255, 255, 0.25)",
+                        border: "1px solid var(--glass-border)",
+                        borderRadius: 12,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {[
+                        {
+                          label: "Subject",
+                          value: subjectName,
+                        },
+                        {
+                          label: "Category",
+                          value:
+                            subjectById.get(session.subjectId)?.category ||
+                            (subjectById.has(session.subjectId)
+                              ? "No category"
+                              : "Subject no longer available"),
+                        },
+                        {
+                          label: "Completed",
+                          value: formatDate(session.endedAt),
+                        },
+                        {
+                          label: "Study duration",
+                          value: formatDuration(session.durationMs),
+                        },
+                        {
+                          label: "Global XP earned",
+                          value:
+                            "+" + (globalXPGains.get(session.id) ?? 0)
+                              .toLocaleString("en") + " XP",
+                        },
+                        {
+                          label: "Subject XP earned",
+                          value:
+                            "+" + (subjectXPGains.get(session.id) ?? 0)
+                              .toLocaleString("en") + " XP",
+                        },
+                      ].map(({ label, value }) => (
+                        <div key={label} style={{ minWidth: 0 }}>
+                          <dt style={{
+                            color: "var(--text-secondary)",
+                            fontSize: 12,
+                          }}>
+                            {label}
+                          </dt>
+                          <dd style={{
+                            margin: "4px 0 0",
+                            color: "var(--text-primary)",
+                            fontWeight: 650,
+                          }}>
+                            {value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </details>
                 </article>
               );
             })}
+
+            {sessionLimit < filteredSessions.length && (
+              <button
+                type="button"
+                className="history-filter-reset"
+                aria-controls="history-session-list"
+                onClick={() => setSessionLimit((current) => current + 3)}
+                style={{
+                  justifySelf: "center",
+                  maxWidth: "100%",
+                  whiteSpace: "normal",
+                  flexWrap: "wrap",
+                  padding: "12px 18px",
+                  marginTop: 4,
+                }}
+              >
+                Show more history
+                <span style={{ fontWeight: 400 }}>
+                  ({filteredSessions.length - sessionLimit} remaining)
+                </span>
+              </button>
+            )}
           </div>
         )}
       </section>
