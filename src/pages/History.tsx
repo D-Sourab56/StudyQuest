@@ -1187,6 +1187,41 @@ function History() {
                         </div>
                       ))}
                     </dl>
+                    <div
+                      style={{
+                        marginTop: 16,
+                        padding: 16,
+                        background: "rgba(255, 255, 255, 0.25)",
+                        border: "1px solid var(--glass-border)",
+                        borderRadius: 12,
+                        minWidth: 0,
+                      }}
+                    >
+                      <h4
+                        style={{
+                          margin: "0 0 8px",
+                          color: "var(--text-primary)",
+                          fontSize: 13,
+                          fontWeight: 650,
+                        }}
+                      >
+                        Session notes
+                      </h4>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: session.notes?.trim()
+                            ? "var(--text-primary)"
+                            : "var(--text-secondary)",
+                          fontSize: 13,
+                          lineHeight: 1.7,
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {session.notes?.trim() || "No notes added."}
+                      </p>
+                    </div>
                   </details>
                 </article>
               );

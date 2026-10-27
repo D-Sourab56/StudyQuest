@@ -12,4 +12,6 @@ export interface StudySession {
   xpEarned: number;
 
   createdAt: string;
+
+  notes?: string;
 }

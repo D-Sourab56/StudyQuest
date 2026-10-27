@@ -56,10 +56,32 @@ function StudyTimer({
 
     resumeTimer,
 
-    finishTimer,
+    finishTimerWithNotes,
+    savedSessionNotes,
+    saveSessionNotes,
   } = useStudyTimer();
 
   // =========================================
+  // Keep the draft separate for each timer session.
+  const [notesDraft, setNotesDraft] = useState({
+    sessionKey: "",
+    value: "",
+  });
+
+  const sessionKey = activeTimer
+    ? JSON.stringify([activeTimer.subjectId, activeTimer.startedAt])
+    : "";
+
+  const sessionNotes =
+    notesDraft.sessionKey === sessionKey ? notesDraft.value : savedSessionNotes;
+  const [notesSaveError, setNotesSaveError] = useState("");
+  const hasUnsavedNotes = sessionNotes !== savedSessionNotes;
+
+  function handleSaveNotes() {
+    const saved = saveSessionNotes(sessionNotes);
+    setNotesSaveError(saved ? "" : sessionKey);
+  }
+
   // SUBJECT SELECTION
   // =========================================
 
@@ -184,6 +206,93 @@ function StudyTimer({
               </div>
             </div>
 
+            <div
+              className="form-group"
+              style={{ marginBottom: 20, minWidth: 0 }}
+            >
+              <label htmlFor="study-session-notes">
+                Session notes (optional)
+              </label>
+
+              <textarea
+                id="study-session-notes"
+                value={sessionNotes}
+                maxLength={2000}
+                rows={4}
+                placeholder="What did you learn or practise?"
+                aria-describedby="study-session-notes-help"
+                onChange={(event) => {
+                  setNotesDraft({
+                    sessionKey,
+                    value: event.target.value,
+                  });
+                  setNotesSaveError("");
+                }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  minHeight: 110,
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                  padding: "12px 14px",
+                  color: "var(--text-primary)",
+                  background: "var(--glass)",
+                  border: "1px solid var(--glass-border)",
+                  borderRadius: 12,
+                  font: "inherit",
+                  lineHeight: 1.6,
+                }}
+              />
+
+              <p
+                id="study-session-notes-help"
+                style={{
+                  margin: "8px 0 0",
+                  color: "var(--text-secondary)",
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                }}
+              >
+                Use Save notes to keep your draft when you leave or refresh.
+                Finish also saves the current notes with your session.
+                {" "}{sessionNotes.length.toLocaleString("en")} / 2,000 characters
+              </p>
+            </div>
+
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+              marginBottom: 20,
+            }}>
+              <button
+                type="button"
+                className="secondary-button timer-control-button"
+                onClick={handleSaveNotes}
+                disabled={!hasUnsavedNotes}
+              >
+                Save notes
+              </button>
+              <span
+                role="status"
+                style={{
+                  fontSize: 12,
+                  color: notesSaveError === sessionKey
+                    ? "var(--danger)"
+                    : "var(--text-secondary)",
+                }}
+              >
+                {notesSaveError === sessionKey
+                  ? "Could not save notes. Please try again before leaving."
+                  : hasUnsavedNotes
+                    ? "Unsaved changes"
+                    : savedSessionNotes
+                      ? "Notes saved"
+                      : "No unsaved changes"}
+              </span>
+            </div>
+
             <div className="timer-controls">
               {activeTimer.status ===
               "running" ? (
@@ -219,9 +328,7 @@ function StudyTimer({
               <button
                 type="button"
                 className="finish-session-button"
-                onClick={
-                  finishTimer
-                }
+                onClick={() => finishTimerWithNotes(sessionNotes)}
               >
                 <Square
                   size={17}

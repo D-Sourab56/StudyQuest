@@ -110,6 +110,10 @@ function normalizeStudySession(
     xpEarned,
 
     createdAt: session.createdAt,
+
+    ...(typeof session.notes === "string"
+      ? { notes: session.notes }
+      : {}),
   };
 }
 

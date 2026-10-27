@@ -34,6 +34,38 @@ import {
   calculateSessionXPGain,
 } from "../utils/xp";
 
+const ACTIVE_NOTES_KEY = "studyquest:active-session-notes:v1";
+
+interface SavedNotesDraft {
+  sessionKey: string;
+  value: string;
+}
+
+function getNotesSessionKey(timer: ActiveStudyTimer | null): string {
+  return timer
+    ? JSON.stringify([timer.subjectId, timer.startedAt])
+    : "";
+}
+
+function loadSavedNotesDraft(): SavedNotesDraft {
+  try {
+    const raw = localStorage.getItem(ACTIVE_NOTES_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      "sessionKey" in parsed &&
+      "value" in parsed &&
+      typeof parsed.sessionKey === "string" &&
+      typeof parsed.value === "string"
+    ) {
+      return { sessionKey: parsed.sessionKey, value: parsed.value };
+    }
+  } catch (error) {
+    console.error("Could not restore session notes:", error);
+  }
+  return { sessionKey: "", value: "" };
+}
 interface StudyTimerContextValue {
   activeTimer: ActiveStudyTimer | null;
 
@@ -55,7 +87,13 @@ interface StudyTimerContextValue {
 
   resumeTimer: () => void;
 
+  savedSessionNotes: string;
+
+  saveSessionNotes: (notes: string) => boolean;
+
   finishTimer: () => void;
+
+  finishTimerWithNotes: (notes: string) => void;
 }
 
 const StudyTimerContext =
@@ -83,6 +121,32 @@ export function StudyTimerProvider({
   // ELAPSED TIME
   // =========================================
 
+  const [savedNotesDraft, setSavedNotesDraft] =
+    useState<SavedNotesDraft>(loadSavedNotesDraft);
+
+  const notesSessionKey = getNotesSessionKey(activeTimer);
+  const savedSessionNotes =
+    activeTimer && savedNotesDraft.sessionKey === notesSessionKey
+      ? savedNotesDraft.value
+      : "";
+
+  function saveSessionNotes(notes: string): boolean {
+    if (!activeTimer) return false;
+
+    const draft = { sessionKey: notesSessionKey, value: notes };
+    try {
+      const serialized = JSON.stringify(draft);
+      localStorage.setItem(ACTIVE_NOTES_KEY, serialized);
+      if (localStorage.getItem(ACTIVE_NOTES_KEY) !== serialized) {
+        return false;
+      }
+      setSavedNotesDraft(draft);
+      return true;
+    } catch (error) {
+      console.error("Could not save session notes:", error);
+      return false;
+    }
+  }
   const [elapsedMs, setElapsedMs] =
     useState(() =>
       activeTimer
@@ -266,6 +330,10 @@ export function StudyTimerProvider({
   // =========================================
 
   function finishTimer() {
+    finishTimerWithNotes(savedSessionNotes);
+  }
+
+  function finishTimerWithNotes(notes: string) {
     if (!activeTimer) {
       return;
     }
@@ -300,6 +368,8 @@ export function StudyTimerProvider({
       durationMs,
 
       xpEarned,
+
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
 
       createdAt: new Date().toISOString(),
     };
@@ -341,6 +411,9 @@ export function StudyTimerProvider({
         pauseTimer,
         resumeTimer,
         finishTimer,
+        finishTimerWithNotes,
+        savedSessionNotes,
+        saveSessionNotes,
       }}
     >
       {children}
