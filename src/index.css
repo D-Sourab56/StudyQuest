@@ -5814,3 +5814,36 @@ html[data-theme="dark"] select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* =========================================================
+   SETTINGS — PRIVATE ACCOUNT PANEL SEPARATION
+   ========================================================= */
+
+/* Give the account panel breathing room below study preferences.
+   The selector matches the existing PrivateAccountPanel component. */
+section.panel[aria-labelledby="private-account-title"] {
+  margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  section.panel[aria-labelledby="private-account-title"] {
+    margin-top: 18px;
+  }
+}
+
+/* =========================================
+   HIDE NUMBER INPUT SPINNER ARROWS
+   ========================================= */
+
+/* Chrome, Edge, Safari */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

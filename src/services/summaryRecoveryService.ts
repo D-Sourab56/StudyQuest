@@ -8,13 +8,54 @@ const PENDING_SESSION_KEY =
   "studyquest:pending-summary-session:v1";
 
 // =========================================
+// STORAGE SCOPE
+// =========================================
+
+type SummaryRecoveryScope = {
+  type: "account";
+  userId: string;
+};
+
+let currentScope: SummaryRecoveryScope | null = null;
+
+
+function useAccountRecovery(userId: string): void {
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(userId)) {
+    throw new Error(
+      "Invalid StudyQuest account ID."
+    );
+  }
+
+  currentScope = {
+    type: "account",
+    userId: userId.toLowerCase(),
+  };
+}
+
+function getPendingSessionKey(): string {
+  if (currentScope === null) {
+    throw new Error(
+      "StudyQuest account recovery storage is not active."
+    );
+  }
+
+  return (
+    `${PENDING_SESSION_KEY}:account:` +
+    currentScope.userId
+  );
+}
+
+// =========================================
 // SAVE PENDING SESSION
 // =========================================
 
 function savePendingSession(sessionId: string): void {
   try {
     localStorage.setItem(
-      PENDING_SESSION_KEY,
+      getPendingSessionKey(),
       sessionId
     );
   } catch (error) {
@@ -31,12 +72,12 @@ function savePendingSession(sessionId: string): void {
 
 function clearPendingSession(sessionId: string): void {
   try {
-    const currentId = localStorage.getItem(
-      PENDING_SESSION_KEY
-    );
+    const key = getPendingSessionKey();
+
+    const currentId = localStorage.getItem(key);
 
     if (currentId === sessionId) {
-      localStorage.removeItem(PENDING_SESSION_KEY);
+      localStorage.removeItem(key);
     }
   } catch (error) {
     console.error(
@@ -74,8 +115,10 @@ function getPendingSession(): StudySession | null {
     }
 
     // First, restore the explicitly pending session.
+    const pendingKey = getPendingSessionKey();
+
     const pendingId = localStorage.getItem(
-      PENDING_SESSION_KEY
+      pendingKey
     );
 
     if (pendingId) {
@@ -90,7 +133,7 @@ function getPendingSession(): StudySession | null {
         return pendingSession;
       }
 
-      localStorage.removeItem(PENDING_SESSION_KEY);
+      localStorage.removeItem(pendingKey);
     }
 
     // Recover older drafts created before this feature.
@@ -128,6 +171,7 @@ function getPendingSession(): StudySession | null {
 }
 
 export const summaryRecoveryService = {
+  useAccountRecovery,
   savePendingSession,
   clearPendingSession,
   getPendingSession,

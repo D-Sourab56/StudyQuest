@@ -1,3 +1,6 @@
+
+import { PrivateAccountPanel } from "../components/PrivateAccountPanel";
+
 import {
   Moon,
   Save,
@@ -52,6 +55,10 @@ function Settings() {
     clearFeedback();
   }
 
+  // =========================================
+  // SAVE SETTINGS
+  // =========================================
+
   function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     clearFeedback();
@@ -62,7 +69,9 @@ function Settings() {
     if (
       cleanName.length > SETTINGS_LIMITS.displayNameLength
     ) {
-      setError("Please use a name with 40 characters or fewer.");
+      setError(
+        "Please use a name with 40 characters or fewer."
+      );
       return;
     }
 
@@ -72,7 +81,9 @@ function Settings() {
       goalMinutes < SETTINGS_LIMITS.minimumDailyGoal ||
       goalMinutes > SETTINGS_LIMITS.maximumDailyGoal
     ) {
-      setError("Enter a whole number between 1 and 1,440 minutes.");
+      setError(
+        "Enter a whole number between 1 and 1,440 minutes."
+      );
       return;
     }
 
@@ -97,6 +108,10 @@ function Settings() {
     setMessage("Settings saved.");
   }
 
+  // =========================================
+  // CANCEL CHANGES
+  // =========================================
+
   function handleCancel() {
     setDisplayName(savedSettings.displayName);
     setDailyGoal(String(savedSettings.dailyGoalMinutes));
@@ -106,9 +121,16 @@ function Settings() {
 
   return (
     <div className="page-container">
+
+      {/* ========================================= */}
+      {/* PAGE HEADER */}
+      {/* ========================================= */}
+
       <header className="page-header">
         <div>
-          <p className="page-eyebrow">PREFERENCES</p>
+          <p className="page-eyebrow">
+            PREFERENCES
+          </p>
 
           <h1>Settings</h1>
 
@@ -118,6 +140,10 @@ function Settings() {
         </div>
       </header>
 
+      {/* ========================================= */}
+      {/* STUDY PREFERENCES */}
+      {/* ========================================= */}
+
       <section
         className="panel"
         aria-labelledby="study-settings-title"
@@ -126,6 +152,8 @@ function Settings() {
           padding: "clamp(20px, 4vw, 32px)",
         }}
       >
+        {/* SECTION HEADER */}
+
         <div
           style={{
             display: "flex",
@@ -138,11 +166,16 @@ function Settings() {
             className="empty-state-icon"
             style={{ flexShrink: 0 }}
           >
-            <SettingsIcon size={24} aria-hidden="true" />
+            <SettingsIcon
+              size={24}
+              aria-hidden="true"
+            />
           </div>
 
           <div>
-            <p className="panel-label">YOUR ROUTINE</p>
+            <p className="panel-label">
+              YOUR ROUTINE
+            </p>
 
             <h2
               id="study-settings-title"
@@ -157,11 +190,21 @@ function Settings() {
           </div>
         </div>
 
+        {/* ========================================= */}
+        {/* SETTINGS FORM */}
+        {/* ========================================= */}
+
         <form
           onSubmit={handleSave}
           noValidate
-          style={{ display: "grid", gap: 24 }}
+          style={{
+            display: "grid",
+            gap: 24,
+          }}
         >
+
+          {/* DISPLAY NAME */}
+
           <div className="form-group">
             <label htmlFor="settings-display-name">
               Display name (optional)
@@ -172,7 +215,9 @@ function Settings() {
               type="text"
               autoComplete="nickname"
               value={displayName}
-              maxLength={SETTINGS_LIMITS.displayNameLength}
+              maxLength={
+                SETTINGS_LIMITS.displayNameLength
+              }
               placeholder="What should we call you?"
               aria-describedby="settings-name-help"
               onChange={(event) => {
@@ -194,6 +239,8 @@ function Settings() {
             </p>
           </div>
 
+          {/* DAILY STUDY GOAL */}
+
           <div className="form-group">
             <label htmlFor="settings-daily-goal">
               Daily study goal (minutes)
@@ -203,8 +250,12 @@ function Settings() {
               id="settings-daily-goal"
               type="number"
               inputMode="numeric"
-              min={SETTINGS_LIMITS.minimumDailyGoal}
-              max={SETTINGS_LIMITS.maximumDailyGoal}
+              min={
+                SETTINGS_LIMITS.minimumDailyGoal
+              }
+              max={
+                SETTINGS_LIMITS.maximumDailyGoal
+              }
               step={1}
               required
               value={dailyGoal}
@@ -228,6 +279,10 @@ function Settings() {
             </p>
           </div>
 
+          {/* ========================================= */}
+          {/* APPEARANCE */}
+          {/* ========================================= */}
+
           <fieldset
             style={{
               margin: 0,
@@ -248,6 +303,9 @@ function Settings() {
             </legend>
 
             <div className="settings-theme-options">
+
+              {/* LIGHT THEME */}
+
               <button
                 type="button"
                 className={
@@ -256,14 +314,24 @@ function Settings() {
                     : "settings-theme-option"
                 }
                 aria-pressed={theme === "light"}
-                onClick={() => selectTheme("light")}
+                onClick={() =>
+                  selectTheme("light")
+                }
               >
-                <Sun size={20} aria-hidden="true" />
+                <Sun
+                  size={20}
+                  aria-hidden="true"
+                />
+
                 <span>
                   <strong>Light</strong>
-                  <small>Bright glass interface</small>
+                  <small>
+                    Bright glass interface
+                  </small>
                 </span>
               </button>
+
+              {/* DARK THEME */}
 
               <button
                 type="button"
@@ -273,16 +341,29 @@ function Settings() {
                     : "settings-theme-option"
                 }
                 aria-pressed={theme === "dark"}
-                onClick={() => selectTheme("dark")}
+                onClick={() =>
+                  selectTheme("dark")
+                }
               >
-                <Moon size={20} aria-hidden="true" />
+                <Moon
+                  size={20}
+                  aria-hidden="true"
+                />
+
                 <span>
                   <strong>Dark</strong>
-                  <small>Dim glass interface</small>
+                  <small>
+                    Dim glass interface
+                  </small>
                 </span>
               </button>
+
             </div>
           </fieldset>
+
+          {/* ========================================= */}
+          {/* ERROR MESSAGE */}
+          {/* ========================================= */}
 
           {error && (
             <p
@@ -293,6 +374,10 @@ function Settings() {
               {error}
             </p>
           )}
+
+          {/* ========================================= */}
+          {/* SUCCESS MESSAGE */}
+          {/* ========================================= */}
 
           <div
             role="status"
@@ -305,6 +390,10 @@ function Settings() {
           >
             {message}
           </div>
+
+          {/* ========================================= */}
+          {/* SAVE / CANCEL BUTTONS */}
+          {/* ========================================= */}
 
           <div
             style={{
@@ -328,13 +417,27 @@ function Settings() {
               type="submit"
               className="primary-button"
             >
-              <Save size={17} aria-hidden="true" />
+              <Save
+                size={17}
+                aria-hidden="true"
+              />
+
               Save settings
             </button>
           </div>
+
+        
         </form>
       </section>
+
+      {/* ========================================= */}
+      {/* PRIVATE ACCOUNT */}
+      {/* ========================================= */}
+
+      <PrivateAccountPanel />
+
     </div>
+
   );
 }
 

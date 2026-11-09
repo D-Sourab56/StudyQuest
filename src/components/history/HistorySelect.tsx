@@ -192,7 +192,7 @@ function HistorySelect({
     event: React.KeyboardEvent<HTMLButtonElement>,
     index: number
   ) {
-    let nextIndex = index;
+   let nextIndex: number;
 
     if (event.key === "ArrowDown") {
       nextIndex =

@@ -6,6 +6,10 @@ import type { StudySubject } from "../types/subject";
 import type { StudySummary } from "../types/summary";
 import type { ActiveStudyTimer } from "../types/timer";
 
+// =========================================
+// TYPES
+// =========================================
+
 interface StudyQuestData {
   version: number;
 
@@ -18,17 +22,72 @@ interface StudyQuestData {
   activeTimer: ActiveStudyTimer | null;
 }
 
-const DEFAULT_DATA: StudyQuestData = {
-  version: STORAGE_CONFIG.version,
-
-  subjects: [],
-
-  sessions: [],
-
-  summaries: [],
-
-  activeTimer: null,
+type StorageScope = {
+  type: "account";
+  userId: string;
 };
+
+// =========================================
+// DEFAULT DATA
+// =========================================
+
+function createDefaultData(): StudyQuestData {
+  return {
+    version: STORAGE_CONFIG.version,
+
+    subjects: [],
+
+    sessions: [],
+
+    summaries: [],
+
+    activeTimer: null,
+  };
+}
+
+// =========================================
+// STORAGE SCOPE
+// =========================================
+//
+// A private account's scope must be selected
+// before study data and timer state are loaded.
+//
+// Never switch scopes while the StudyQuest
+// interface is already mounted.
+
+let currentScope: StorageScope | null = null;
+
+function useAccountStorage(userId: string): void {
+  // Supabase Auth user IDs are UUIDs.
+  // Reject unexpected identifiers.
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(userId)) {
+    throw new Error(
+      "Invalid StudyQuest account ID."
+    );
+  }
+
+  currentScope = {
+    type: "account",
+    userId: userId.toLowerCase(),
+  };
+}
+
+function getStorageKey(): string {
+  if (currentScope === null) {
+    throw new Error(
+      "StudyQuest account storage is not active."
+    );
+  }
+
+  return (
+    `${STORAGE_CONFIG.appDataKey}:account:` +
+    currentScope.userId
+  );
+}
 
 // =========================================
 // ACTIVE TIMER VALIDATION
@@ -166,49 +225,92 @@ function normalizeStudySummary(
 // READ
 // =========================================
 
-function readData(): StudyQuestData {
-  try {
-    const savedData =
-      localStorage.getItem(
-        STORAGE_CONFIG.appDataKey
-      );
+// Read data from the active account storage scope.
 
-    if (!savedData) {
-      return DEFAULT_DATA;
+function readData(
+  storageKey: string = getStorageKey()
+): StudyQuestData {
+  try {
+    const savedData = localStorage.getItem(
+      storageKey
+    );
+
+    // A genuinely new storage scope
+    // has no data yet.
+
+    if (savedData === null) {
+      return createDefaultData();
+    }
+
+    const parsed: unknown = JSON.parse(savedData);
+
+    // Reject invalid storage structures.
+
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
+      throw new Error(
+        "Invalid StudyQuest storage structure."
+      );
     }
 
     const parsedData =
-      JSON.parse(
-        savedData
-      ) as Partial<StudyQuestData>;
+      parsed as Partial<StudyQuestData>;
 
-    const sessions =
-      Array.isArray(
-        parsedData.sessions
-      )
-        ? parsedData.sessions
-            .map(normalizeStudySession)
-            .filter(
-              (
-                session
-              ): session is StudySession =>
-                session !== null
-            )
-        : [];
+    // Do not silently replace corrupted
+    // collections with empty arrays.
 
-    const summaries =
-      Array.isArray(
-        parsedData.summaries
+    if (
+      !Array.isArray(parsedData.subjects) ||
+      !Array.isArray(parsedData.sessions) ||
+      !Array.isArray(parsedData.summaries)
+    ) {
+      throw new Error(
+        "StudyQuest storage collections are invalid."
+      );
+    }
+
+    const sessions = parsedData.sessions.map(
+      normalizeStudySession
+    );
+
+    if (
+      sessions.some(
+        (session) => session === null
       )
-        ? parsedData.summaries
-            .map(normalizeStudySummary)
-            .filter(
-              (
-                summary
-              ): summary is StudySummary =>
-                summary !== null
-            )
-        : [];
+    ) {
+      throw new Error(
+        "StudyQuest contains an invalid study session."
+      );
+    }
+
+    const summaries = parsedData.summaries.map(
+      normalizeStudySummary
+    );
+
+    if (
+      summaries.some(
+        (summary) => summary === null
+      )
+    ) {
+      throw new Error(
+        "StudyQuest contains an invalid study summary."
+      );
+    }
+
+    const activeTimer = parsedData.activeTimer;
+
+    if (
+      activeTimer !== null &&
+      activeTimer !== undefined &&
+      !isActiveStudyTimer(activeTimer)
+    ) {
+      throw new Error(
+        "StudyQuest contains invalid timer data."
+      );
+    }
 
     return {
       version:
@@ -216,21 +318,16 @@ function readData(): StudyQuestData {
           ? parsedData.version
           : STORAGE_CONFIG.version,
 
-      subjects:
-        Array.isArray(parsedData.subjects)
-          ? parsedData.subjects
-          : [],
+      subjects: parsedData.subjects,
 
-      sessions,
+      sessions: sessions as StudySession[],
 
-      summaries,
+      summaries: summaries as StudySummary[],
 
       activeTimer:
-        isActiveStudyTimer(
-          parsedData.activeTimer
-        )
-          ? parsedData.activeTimer
-          : null,
+        activeTimer === undefined
+          ? null
+          : activeTimer as ActiveStudyTimer | null,
     };
   } catch (error) {
     console.error(
@@ -238,7 +335,10 @@ function readData(): StudyQuestData {
       error
     );
 
-    return DEFAULT_DATA;
+    // Never silently replace unreadable
+    // data with an empty dataset.
+
+    throw error;
   }
 }
 
@@ -250,15 +350,23 @@ function saveData(
   data: StudyQuestData
 ): void {
   try {
+    const serializedData =
+      JSON.stringify(data);
+
     localStorage.setItem(
-      STORAGE_CONFIG.appDataKey,
-      JSON.stringify(data)
+      getStorageKey(),
+      serializedData
     );
   } catch (error) {
     console.error(
       "Could not save StudyQuest data:",
       error
     );
+
+    // Prevent the application from treating
+    // a failed storage operation as successful.
+
+    throw error;
   }
 }
 
@@ -364,7 +472,6 @@ function updateSummary(
   const topic = updates.topic.trim();
   const content = updates.content.trim();
 
-  // Both fields are required.
   if (!topic || !content) {
     return false;
   }
@@ -389,7 +496,6 @@ function updateSummary(
 
         return {
           ...summary,
-
           topic,
           content,
         };
@@ -402,7 +508,6 @@ function updateSummary(
     summaries: updatedSummaries,
   });
 
-  // Verify that the changes were persisted.
   const savedSummary =
     getSummaries().find(
       (summary) => summary.id === summaryId
@@ -470,29 +575,27 @@ function clearActiveTimer(): void {
 // =========================================
 
 export const storageService = {
-  getSubjects,
+  // Scope selection
+  useAccountStorage,
 
+  // Subjects
+  getSubjects,
   saveSubjects,
 
+  // Sessions
   getSessions,
-
   saveSessions,
-
   addSession,
 
+  // Summaries
   getSummaries,
-
   saveSummaries,
-
   addSummary,
-
   updateSummary,
-
   deleteSummary,
 
+  // Active timer
   getActiveTimer,
-
   saveActiveTimer,
-
   clearActiveTimer,
 };

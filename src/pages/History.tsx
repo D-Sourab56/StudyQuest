@@ -413,10 +413,6 @@ function History() {
     preferences.sessions;
 
   // =========================================
-  // Reset the visible list when its filters change.
-  useEffect(() => {
-    setSessionLimit(3);
-  }, [sessionFilters.subjectId, sessionFilters.period]);
   // SAVE FILTER PREFERENCES
   // =========================================
 
@@ -797,12 +793,14 @@ function History() {
           prefix="activity"
           filters={activityFilters}
           subjects={subjectOptions}
-          onChange={(next) =>
+          onChange={(next) => {
             setPreferences((current) => ({
               ...current,
-              activity: next,
-            }))
-          }
+              sessions: next,
+            }));
+
+            setSessionLimit(3);
+          }}
         />
 
         {/* MATCHING SESSIONS */}

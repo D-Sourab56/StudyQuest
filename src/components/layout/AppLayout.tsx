@@ -7,7 +7,6 @@ import {
 import {
   NavLink,
   Outlet,
-  useLocation,
 } from "react-router";
 
 import CompactStudyTimer from "../study/CompactStudyTimer";
@@ -19,39 +18,44 @@ import {
   ROUTES,
 } from "../../data/appConfig";
 
-function AppLayout() {
-  const location = useLocation();
+interface NavigationLinksProps {
+  mobile?: boolean;
+}
 
-  // =========================================
-  // ACTIVE NAVIGATION
-  // =========================================
-
-  // Subject details, summaries, and skills
-  // all belong to the Study section.
-
-  const isSubjectPage =
-    location.pathname.startsWith("/subjects/");
-
-  function isNavigationActive(
-    path: string,
-    isActive: boolean
-  ): boolean {
-    if (
-      path === ROUTES.study &&
-      isSubjectPage
-    ) {
-      return true;
-    }
-
-    return isActive;
-  }
+function NavigationLinks({
+  mobile = false,
+}: NavigationLinksProps) {
+  const className = mobile
+    ? "mobile-navigation-link"
+    : "navigation-link";
 
   return (
-    <div className="app-shell">
-      {/* ================================= */}
-      {/* DESKTOP SIDEBAR */}
-      {/* ================================= */}
+    <>
+      {NAVIGATION_ITEMS.map((item) => {
+        const Icon = item.icon;
 
+        return (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === ROUTES.dashboard}
+            className={({ isActive }) =>
+              `${className}${isActive ? " active" : ""}`
+            }
+          >
+            <Icon size={20} aria-hidden="true" />
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      })}
+    </>
+  );
+}
+
+function AppLayout() {
+  return (
+    <div className="app-shell">
+      {/* Desktop sidebar */}
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon">
@@ -69,122 +73,48 @@ function AppLayout() {
           </div>
         </div>
 
-        {/* NAVIGATION */}
-
-        <nav className="sidebar-navigation">
-          {NAVIGATION_ITEMS.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={
-                  item.path ===
-                  ROUTES.dashboard
-                }
-                className={({ isActive }) =>
-                  `navigation-link ${
-                    isNavigationActive(
-                      item.path,
-                      isActive
-                    )
-                      ? "active"
-                      : ""
-                  }`
-                }
-              >
-                <Icon size={20} />
-
-                <span>
-                  {item.label}
-                </span>
-              </NavLink>
-            );
-          })}
+        <nav
+          className="sidebar-navigation"
+          aria-label="Main navigation"
+        >
+          <NavigationLinks />
         </nav>
-
-        {/* SIDEBAR MESSAGE */}
 
         <div className="sidebar-message">
           <Sparkles size={20} />
 
           <div>
-            <strong>
-              Keep progressing
-            </strong>
-
+            <strong>Keep progressing</strong>
             <p>
-              Small study sessions
-              become real skills.
+              Small study sessions become real skills.
             </p>
           </div>
         </div>
       </aside>
 
-      {/* ================================= */}
-      {/* MOBILE HEADER */}
-      {/* ================================= */}
-
-      <div className="mobile-header">
+      {/* Mobile header */}
+      <header className="mobile-header">
         <div className="brand-icon">
           <BookOpenCheck size={21} />
         </div>
 
-        <span>
-          {APP_NAME}
-        </span>
-      </div>
+        <span>{APP_NAME}</span>
+      </header>
 
-      {/* ================================= */}
-      {/* MAIN PAGE */}
-      {/* ================================= */}
-
+      {/* Main content */}
       <main className="app-main">
         <Outlet />
       </main>
 
-      {/* ================================= */}
-      {/* GLOBAL ACTIVE TIMER */}
-      {/* ================================= */}
-
+      {/* Global study timer */}
       <CompactStudyTimer />
 
-      {/* ================================= */}
-      {/* MOBILE NAVIGATION */}
-      {/* ================================= */}
-
-      <nav className="mobile-navigation">
-        {NAVIGATION_ITEMS.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={
-                item.path ===
-                ROUTES.dashboard
-              }
-              className={({ isActive }) =>
-                `mobile-navigation-link ${
-                  isNavigationActive(
-                    item.path,
-                    isActive
-                  )
-                    ? "active"
-                    : ""
-                }`
-              }
-            >
-              <Icon size={20} />
-
-              <span>
-                {item.label}
-              </span>
-            </NavLink>
-          );
-        })}
+      {/* Mobile navigation */}
+      <nav
+        className="mobile-navigation"
+        aria-label="Mobile navigation"
+      >
+        <NavigationLinks mobile />
       </nav>
     </div>
   );

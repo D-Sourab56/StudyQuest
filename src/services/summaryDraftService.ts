@@ -1,10 +1,23 @@
 
 import type { StudySummary } from "../types/summary";
 
+// =========================================
+// TYPES
+// =========================================
+
 export type StudySummaryDraft = Pick<
   StudySummary,
   "topic" | "content"
 >;
+
+type SummaryDraftScope = {
+  type: "account";
+  userId: string;
+};
+
+// =========================================
+// STORAGE CONFIGURATION
+// =========================================
 
 const DRAFT_STORAGE_PREFIX =
   "studyquest:summary-draft:v1:";
@@ -14,15 +27,52 @@ const EMPTY_DRAFT: StudySummaryDraft = {
   content: "",
 };
 
+let currentScope: SummaryDraftScope | null = null;
+
+// =========================================
+// STORAGE SCOPE
+// =========================================
+
+function useAccountDrafts(userId: string): void {
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(userId)) {
+    throw new Error(
+      "Invalid StudyQuest account ID."
+    );
+  }
+
+  currentScope = {
+    type: "account",
+    userId: userId.toLowerCase(),
+  };
+}
+
+// =========================================
+// STORAGE KEY
+// =========================================
+
 function getDraftKey(sessionId: string): string {
-  return `${DRAFT_STORAGE_PREFIX}${sessionId}`;
+  if (currentScope === null) {
+    throw new Error(
+      "StudyQuest account draft storage is not active."
+    );
+  }
+
+  return (
+    `${DRAFT_STORAGE_PREFIX}account:` +
+    `${currentScope.userId}:${sessionId}`
+  );
 }
 
 // =========================================
 // READ DRAFT
 // =========================================
 
-function getDraft(sessionId: string): StudySummaryDraft {
+function getDraft(
+  sessionId: string
+): StudySummaryDraft {
   try {
     const savedDraft = localStorage.getItem(
       getDraftKey(sessionId)
@@ -32,7 +82,7 @@ function getDraft(sessionId: string): StudySummaryDraft {
       return { ...EMPTY_DRAFT };
     }
 
-    const parsed = JSON.parse(savedDraft) as unknown;
+    const parsed: unknown = JSON.parse(savedDraft);
 
     if (!parsed || typeof parsed !== "object") {
       return { ...EMPTY_DRAFT };
@@ -52,7 +102,11 @@ function getDraft(sessionId: string): StudySummaryDraft {
           : "",
     };
   } catch (error) {
-    console.error("Could not read summary draft:", error);
+    console.error(
+      "Could not read summary draft:",
+      error
+    );
+
     return { ...EMPTY_DRAFT };
   }
 }
@@ -79,7 +133,11 @@ function saveDraft(
 
     return true;
   } catch (error) {
-    console.error("Could not save summary draft:", error);
+    console.error(
+      "Could not save summary draft:",
+      error
+    );
+
     return false;
   }
 }
@@ -90,13 +148,22 @@ function saveDraft(
 
 function clearDraft(sessionId: string): void {
   try {
-    localStorage.removeItem(getDraftKey(sessionId));
+    localStorage.removeItem(
+      getDraftKey(sessionId)
+    );
   } catch (error) {
-    console.error("Could not clear summary draft:", error);
+    console.error(
+      "Could not clear summary draft:",
+      error
+    );
   }
 }
 
+// =========================================
+// EXPORT SERVICE
+// =========================================
 export const summaryDraftService = {
+  useAccountDrafts,
   getDraft,
   saveDraft,
   clearDraft,

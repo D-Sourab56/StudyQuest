@@ -1,3 +1,4 @@
+
 export type StudyTheme = "light" | "dark";
 
 export interface StudySettings {
@@ -6,11 +7,19 @@ export interface StudySettings {
   theme: StudyTheme;
 }
 
+// =========================================
+// DEFAULT SETTINGS
+// =========================================
+
 export const DEFAULT_SETTINGS: StudySettings = {
   displayName: "",
   dailyGoalMinutes: 30,
   theme: "light",
 };
+
+// =========================================
+// SETTINGS LIMITS
+// =========================================
 
 export const SETTINGS_LIMITS = {
   displayNameLength: 40,
@@ -18,7 +27,59 @@ export const SETTINGS_LIMITS = {
   maximumDailyGoal: 1440,
 } as const;
 
+// =========================================
+// STORAGE CONFIGURATION
+// =========================================
+
 const SETTINGS_KEY = "studyquest:settings:v1";
+
+type SettingsScope = {
+  type: "account";
+  userId: string;
+};
+
+let currentScope: SettingsScope | null = null;
+
+// =========================================
+// SCOPE MANAGEMENT
+// =========================================
+
+function useAccountSettings(userId: string): void {
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(userId)) {
+    throw new Error(
+      "Invalid StudyQuest account ID."
+    );
+  }
+
+  currentScope = {
+    type: "account",
+    userId: userId.toLowerCase(),
+  };
+}
+
+// =========================================
+// RESOLVE STORAGE KEY
+// =========================================
+
+function getSettingsKey(): string {
+  if (currentScope === null) {
+    throw new Error(
+      "StudyQuest account settings storage is not active."
+    );
+  }
+
+  return (
+    `${SETTINGS_KEY}:account:` +
+    currentScope.userId
+  );
+}
+
+// =========================================
+// VALIDATION HELPERS
+// =========================================
 
 function isRecord(
   value: unknown
@@ -30,7 +91,9 @@ function isRecord(
   );
 }
 
-function isValidDailyGoal(value: unknown): value is number {
+function isValidDailyGoal(
+  value: unknown
+): value is number {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -39,13 +102,21 @@ function isValidDailyGoal(value: unknown): value is number {
   );
 }
 
-function isStudyTheme(value: unknown): value is StudyTheme {
+function isStudyTheme(
+  value: unknown
+): value is StudyTheme {
   return value === "light" || value === "dark";
 }
 
+// =========================================
+// GET SETTINGS
+// =========================================
+
 function getSettings(): StudySettings {
   try {
-    const saved = localStorage.getItem(SETTINGS_KEY);
+    const saved = localStorage.getItem(
+      getSettingsKey()
+    );
 
     if (!saved) {
       return { ...DEFAULT_SETTINGS };
@@ -62,7 +133,10 @@ function getSettings(): StudySettings {
         typeof parsed.displayName === "string"
           ? parsed.displayName
               .trim()
-              .slice(0, SETTINGS_LIMITS.displayNameLength)
+              .slice(
+                0,
+                SETTINGS_LIMITS.displayNameLength
+              )
           : DEFAULT_SETTINGS.displayName,
 
       dailyGoalMinutes: isValidDailyGoal(
@@ -76,17 +150,31 @@ function getSettings(): StudySettings {
         : DEFAULT_SETTINGS.theme,
     };
   } catch (error) {
-    console.error("Could not load study settings:", error);
+    console.error(
+      "Could not load study settings:",
+      error
+    );
+
     return { ...DEFAULT_SETTINGS };
   }
 }
 
-function saveSettings(settings: StudySettings): boolean {
-  const displayName = settings.displayName.trim();
+// =========================================
+// SAVE SETTINGS
+// =========================================
+
+function saveSettings(
+  settings: StudySettings
+): boolean {
+  const displayName =
+    settings.displayName.trim();
 
   if (
-    displayName.length > SETTINGS_LIMITS.displayNameLength ||
-    !isValidDailyGoal(settings.dailyGoalMinutes) ||
+    displayName.length >
+      SETTINGS_LIMITS.displayNameLength ||
+    !isValidDailyGoal(
+      settings.dailyGoalMinutes
+    ) ||
     !isStudyTheme(settings.theme)
   ) {
     return false;
@@ -94,23 +182,46 @@ function saveSettings(settings: StudySettings): boolean {
 
   const nextSettings: StudySettings = {
     displayName,
-    dailyGoalMinutes: settings.dailyGoalMinutes,
+    dailyGoalMinutes:
+      settings.dailyGoalMinutes,
     theme: settings.theme,
   };
 
   try {
-    const serialized = JSON.stringify(nextSettings);
+    const serialized =
+      JSON.stringify(nextSettings);
 
-    localStorage.setItem(SETTINGS_KEY, serialized);
+    const storageKey =
+      getSettingsKey();
 
-    return localStorage.getItem(SETTINGS_KEY) === serialized;
+    localStorage.setItem(
+      storageKey,
+      serialized
+    );
+
+    return (
+      localStorage.getItem(storageKey) ===
+      serialized
+    );
   } catch (error) {
-    console.error("Could not save study settings:", error);
+    console.error(
+      "Could not save study settings:",
+      error
+    );
+
     return false;
   }
 }
 
+// =========================================
+// EXPORT
+// =========================================
+
 export const settingsService = {
+  // Storage scope
+  useAccountSettings,
+
+  // Settings
   getSettings,
   saveSettings,
 };

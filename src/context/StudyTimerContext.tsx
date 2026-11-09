@@ -34,23 +34,83 @@ import {
   calculateSessionXPGain,
 } from "../utils/xp";
 
-const ACTIVE_NOTES_KEY = "studyquest:active-session-notes:v1";
+// =========================================
+// ACTIVE NOTES STORAGE
+// =========================================
+
+
+const ACTIVE_NOTES_KEY =
+  "studyquest:active-session-notes:v1";
+
+type NotesStorageScope = {
+  type: "account";
+  userId: string;
+};
+
+let currentNotesScope: NotesStorageScope | null = null;
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function setAccountSessionNotesScope(
+  userId: string
+): void {
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(userId)) {
+    throw new Error(
+      "Invalid StudyQuest account ID."
+    );
+  }
+
+  currentNotesScope = {
+    type: "account",
+    userId: userId.toLowerCase(),
+  };
+}
+
+function getActiveNotesKey(): string {
+  if (currentNotesScope === null) {
+    throw new Error(
+      "StudyQuest account notes storage is not active."
+    );
+  }
+
+  return (
+    `${ACTIVE_NOTES_KEY}:account:` +
+    currentNotesScope.userId
+  );
+}
+
+// =========================================
+// SAVED NOTES TYPES
+// =========================================
 
 interface SavedNotesDraft {
   sessionKey: string;
   value: string;
 }
 
-function getNotesSessionKey(timer: ActiveStudyTimer | null): string {
+function getNotesSessionKey(
+  timer: ActiveStudyTimer | null
+): string {
   return timer
-    ? JSON.stringify([timer.subjectId, timer.startedAt])
+    ? JSON.stringify([
+        timer.subjectId,
+        timer.startedAt,
+      ])
     : "";
 }
 
 function loadSavedNotesDraft(): SavedNotesDraft {
   try {
-    const raw = localStorage.getItem(ACTIVE_NOTES_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(
+      getActiveNotesKey()
+    );
+
+    const parsed: unknown = raw
+      ? JSON.parse(raw)
+      : null;
+
     if (
       parsed !== null &&
       typeof parsed === "object" &&
@@ -59,13 +119,28 @@ function loadSavedNotesDraft(): SavedNotesDraft {
       typeof parsed.sessionKey === "string" &&
       typeof parsed.value === "string"
     ) {
-      return { sessionKey: parsed.sessionKey, value: parsed.value };
+      return {
+        sessionKey: parsed.sessionKey,
+        value: parsed.value,
+      };
     }
   } catch (error) {
-    console.error("Could not restore session notes:", error);
+    console.error(
+      "Could not restore session notes:",
+      error
+    );
   }
-  return { sessionKey: "", value: "" };
+
+  return {
+    sessionKey: "",
+    value: "",
+  };
 }
+
+// =========================================
+// CONTEXT TYPES
+// =========================================
+
 interface StudyTimerContextValue {
   activeTimer: ActiveStudyTimer | null;
 
@@ -89,11 +164,15 @@ interface StudyTimerContextValue {
 
   savedSessionNotes: string;
 
-  saveSessionNotes: (notes: string) => boolean;
+  saveSessionNotes: (
+    notes: string
+  ) => boolean;
 
   finishTimer: () => void;
 
-  finishTimerWithNotes: (notes: string) => void;
+  finishTimerWithNotes: (
+    notes: string
+  ) => void;
 }
 
 const StudyTimerContext =
@@ -104,6 +183,10 @@ const StudyTimerContext =
 interface StudyTimerProviderProps {
   children: React.ReactNode;
 }
+
+// =========================================
+// STUDY TIMER PROVIDER
+// =========================================
 
 export function StudyTimerProvider({
   children,
@@ -118,35 +201,68 @@ export function StudyTimerProvider({
     );
 
   // =========================================
-  // ELAPSED TIME
+  // SAVED SESSION NOTES
   // =========================================
 
   const [savedNotesDraft, setSavedNotesDraft] =
-    useState<SavedNotesDraft>(loadSavedNotesDraft);
+    useState<SavedNotesDraft>(
+      loadSavedNotesDraft
+    );
 
-  const notesSessionKey = getNotesSessionKey(activeTimer);
+  const notesSessionKey =
+    getNotesSessionKey(activeTimer);
+
   const savedSessionNotes =
-    activeTimer && savedNotesDraft.sessionKey === notesSessionKey
+    activeTimer &&
+    savedNotesDraft.sessionKey === notesSessionKey
       ? savedNotesDraft.value
       : "";
 
-  function saveSessionNotes(notes: string): boolean {
-    if (!activeTimer) return false;
+  function saveSessionNotes(
+    notes: string
+  ): boolean {
+    if (!activeTimer) {
+      return false;
+    }
 
-    const draft = { sessionKey: notesSessionKey, value: notes };
+    const draft: SavedNotesDraft = {
+      sessionKey: notesSessionKey,
+      value: notes,
+    };
+
     try {
       const serialized = JSON.stringify(draft);
-      localStorage.setItem(ACTIVE_NOTES_KEY, serialized);
-      if (localStorage.getItem(ACTIVE_NOTES_KEY) !== serialized) {
+      const key = getActiveNotesKey();
+
+      localStorage.setItem(
+        key,
+        serialized
+      );
+
+      if (
+        localStorage.getItem(key) !==
+        serialized
+      ) {
         return false;
       }
+
       setSavedNotesDraft(draft);
+
       return true;
     } catch (error) {
-      console.error("Could not save session notes:", error);
+      console.error(
+        "Could not save session notes:",
+        error
+      );
+
       return false;
     }
   }
+
+  // =========================================
+  // ELAPSED TIME
+  // =========================================
+
   const [elapsedMs, setElapsedMs] =
     useState(() =>
       activeTimer
@@ -160,7 +276,8 @@ export function StudyTimerProvider({
 
   const [completedSession, setCompletedSession] =
     useState<StudySession | null>(
-      () => summaryRecoveryService.getPendingSession()
+      () =>
+        summaryRecoveryService.getPendingSession()
     );
 
   // =========================================
@@ -190,23 +307,23 @@ export function StudyTimerProvider({
   // =========================================
 
   useEffect(() => {
-    if (activeTimer && !activeSubject) {
-      storageService.clearActiveTimer();
+  if (activeTimer && !activeSubject) {
+    storageService.clearActiveTimer();
 
-      setActiveTimer(null);
-      setElapsedMs(0);
-    }
-  }, [activeTimer, activeSubject]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveTimer(null);
+    setElapsedMs(0);
+  }
+}, [activeTimer, activeSubject]);
 
   // =========================================
   // UPDATE DISPLAY TIME
   // =========================================
 
   useEffect(() => {
-    if (!activeTimer) {
-      setElapsedMs(0);
-      return;
-    }
+  if (!activeTimer) {
+    return;
+  }
 
     const timer = activeTimer;
 
@@ -222,10 +339,11 @@ export function StudyTimerProvider({
       return;
     }
 
-    const intervalId = window.setInterval(
-      updateTime,
-      500
-    );
+    const intervalId =
+      window.setInterval(
+        updateTime,
+        500
+      );
 
     return () => {
       window.clearInterval(intervalId);
@@ -236,15 +354,21 @@ export function StudyTimerProvider({
   // START TIMER
   // =========================================
 
-  function startTimer(subjectId: string) {
-    if (!subjectId || activeTimer) {
+  function startTimer(
+    subjectId: string
+  ) {
+    if (
+      !subjectId ||
+      activeTimer
+    ) {
       return;
     }
 
     const timer: ActiveStudyTimer = {
       subjectId,
 
-      startedAt: new Date().toISOString(),
+      startedAt:
+        new Date().toISOString(),
 
       status: "running",
 
@@ -275,7 +399,8 @@ export function StudyTimerProvider({
 
       status: "paused",
 
-      pausedAt: new Date().toISOString(),
+      pausedAt:
+        new Date().toISOString(),
     };
 
     storageService.saveActiveTimer(timer);
@@ -330,64 +455,79 @@ export function StudyTimerProvider({
   // =========================================
 
   function finishTimer() {
-    finishTimerWithNotes(savedSessionNotes);
+    finishTimerWithNotes(
+      savedSessionNotes
+    );
   }
 
-  function finishTimerWithNotes(notes: string) {
+  function finishTimerWithNotes(
+    notes: string
+  ) {
     if (!activeTimer) {
       return;
     }
 
     const finishedAt = Date.now();
 
-    const durationMs = getElapsedMilliseconds(
-      activeTimer,
-      finishedAt
-    );
+    const durationMs =
+      getElapsedMilliseconds(
+        activeTimer,
+        finishedAt
+      );
 
     const existingSessions =
       storageService.getSessions();
 
-    const xpEarned = calculateSessionXPGain(
-      existingSessions,
-      activeTimer.subjectId,
-      durationMs
-    );
+    // Preserve existing XP calculations.
+    // Short sessions can still earn XP.
+
+    const xpEarned =
+      calculateSessionXPGain(
+        existingSessions,
+        activeTimer.subjectId,
+        durationMs
+      );
 
     const session: StudySession = {
       id: crypto.randomUUID(),
 
-      subjectId: activeTimer.subjectId,
+      subjectId:
+        activeTimer.subjectId,
 
-      startedAt: activeTimer.startedAt,
+      startedAt:
+        activeTimer.startedAt,
 
-      endedAt: new Date(
-        finishedAt
-      ).toISOString(),
+      endedAt:
+        new Date(
+          finishedAt
+        ).toISOString(),
 
       durationMs,
 
       xpEarned,
 
-      ...(notes.trim() ? { notes: notes.trim() } : {}),
+      ...(notes.trim()
+        ? {
+            notes: notes.trim(),
+          }
+        : {}),
 
-      createdAt: new Date().toISOString(),
+      createdAt:
+        new Date().toISOString(),
     };
 
-    // 1. Save the completed session.
+    // 1. Save completed session.
     storageService.addSession(session);
 
-    // 2. Remember that this session
-    //    still needs a study summary.
+    // 2. Remember pending summary.
     summaryRecoveryService.savePendingSession(
       session.id
     );
 
-    // 3. Clear the active timer.
+    // 3. Clear active timer.
     storageService.clearActiveTimer();
 
-    // 4. Show the finished session
-    //    and its summary form.
+    // 4. Display completed session.
     setCompletedSession(session);
 
     setActiveTimer(null);
@@ -421,6 +561,11 @@ export function StudyTimerProvider({
   );
 }
 
+// =========================================
+// CUSTOM HOOK
+// =========================================
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function useStudyTimer() {
   const context = useContext(
     StudyTimerContext

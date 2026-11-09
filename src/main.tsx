@@ -1,24 +1,24 @@
-import React from "react";
 
+import React from "react";
 import ReactDOM from "react-dom/client";
 
-import {
-  BrowserRouter,
-} from "react-router";
+import { BrowserRouter } from "react-router";
 
 import App from "./App";
 
-import {
-  StudyTimerProvider,
-} from "./context/StudyTimerContext";
+import { AuthProvider } from "./context/AuthContext";
+import { StudyTimerProvider } from "./context/StudyTimerContext";
 
-import {
-  settingsService,
-} from "./services/settingsService";
+import { StorageScopeGate } from "./components/StorageScopeGate";
+
+import { settingsService } from "./services/settingsService";
 
 import "./index.css";
 
-// Apply the saved appearance before the app is painted.
+// =========================================
+// INITIAL SETTINGS
+// =========================================
+
 const initialSettings = settingsService.getSettings();
 
 document.documentElement.dataset.theme =
@@ -27,16 +27,22 @@ document.documentElement.dataset.theme =
 document.documentElement.style.colorScheme =
   initialSettings.theme;
 
+// =========================================
+// APPLICATION ROOT
+// =========================================
+
 ReactDOM.createRoot(
-  document.getElementById(
-    "root"
-  )!
+  document.getElementById("root")!
 ).render(
   <React.StrictMode>
     <BrowserRouter>
-      <StudyTimerProvider>
-        <App />
-      </StudyTimerProvider>
+      <AuthProvider>
+        <StorageScopeGate>
+          <StudyTimerProvider>
+            <App />
+          </StudyTimerProvider>
+        </StorageScopeGate>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

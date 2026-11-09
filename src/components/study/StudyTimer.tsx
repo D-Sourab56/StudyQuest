@@ -6,10 +6,7 @@ import {
   Square,
 } from "lucide-react";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useState } from "react";
 
 import {
   useStudyTimer,
@@ -99,37 +96,14 @@ function StudyTimer({
   // KEEP SUBJECT SELECTION VALID
   // =========================================
 
-  useEffect(() => {
-    if (activeTimer) {
-      if (
-        selectedSubjectId !==
-        activeTimer.subjectId
-      ) {
-        setSelectedSubjectId(
-          activeTimer.subjectId
-        );
-      }
-
-      return;
-    }
-
-    const selectedExists =
-      subjects.some(
-        (subject) =>
-          subject.id ===
-          selectedSubjectId
-      );
-
-    if (!selectedExists) {
-      setSelectedSubjectId(
-        subjects[0]?.id ?? ""
-      );
-    }
-  }, [
-    subjects,
-    activeTimer,
-    selectedSubjectId,
-  ]);
+  const validSelectedSubjectId =
+    activeTimer?.subjectId ??
+    (subjects.some(
+      (subject) =>
+        subject.id === selectedSubjectId
+    )
+      ? selectedSubjectId
+      : subjects[0]?.id ?? "");
 
   // =========================================
   // COMPLETED SESSION SUBJECT
@@ -373,7 +347,7 @@ function StudyTimer({
                   subjects
                 }
                 value={
-                  selectedSubjectId
+                  validSelectedSubjectId
                 }
                 onChange={
                   setSelectedSubjectId
@@ -385,13 +359,12 @@ function StudyTimer({
               type="button"
               className="primary-button start-session-button"
               disabled={
-                !selectedSubjectId
+                !validSelectedSubjectId
               }
-              onClick={() =>
-                startTimer(
-                  selectedSubjectId
-                )
-              }
+              onClick={() => {
+                setSelectedSubjectId(validSelectedSubjectId);
+                startTimer(validSelectedSubjectId);
+              }}
             >
               <Play
                 size={18}

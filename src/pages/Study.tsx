@@ -1,92 +1,82 @@
-import {
-  BookOpen,
-  Plus,
-  X,
-} from "lucide-react";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { BookOpen, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import StudyTimer from "../components/study/StudyTimer";
 import SubjectCard from "../components/subjects/SubjectCard";
 
-import {
-  useStudyTimer,
-} from "../context/StudyTimerContext";
+import { useStudyTimer } from "../context/StudyTimerContext";
+import { useStorageMode } from "../context/StorageModeContext";
 
-import {
-  storageService,
-} from "../services/storageService";
+import { storageService } from "../services/storageService";
+import { subjectSyncQueueService } from "../services/subjectSyncQueueService";
 
-import type {
-  StudySubject,
-} from "../types/subject";
+import type { StudySubject } from "../types/subject";
+
+// =========================================
+// TYPES
+// =========================================
+
+type SubjectChange =
+  | {
+      type: "save";
+      subject: StudySubject;
+    }
+  | {
+      type: "delete";
+      subjectId: string;
+    };
+
+// =========================================
+// STUDY PAGE
+// =========================================
 
 function Study() {
   // =========================================
   // GLOBAL STUDY TIMER
   // =========================================
 
-  const {
-    setStudyWorkspaceOpen,
-  } = useStudyTimer();
+  const { setStudyWorkspaceOpen } = useStudyTimer();
+
+  // =========================================
+  // STORAGE MODE
+  // =========================================
+
+  const { mode, accountUserId } = useStorageMode();
 
   // =========================================
   // SUBJECT DATA
   // =========================================
 
-  const [
-    subjects,
-    setSubjects,
-  ] = useState<StudySubject[]>(
-    () =>
-      storageService.getSubjects()
+  const [subjects, setSubjects] = useState<StudySubject[]>(
+    () => storageService.getSubjects()
   );
 
   // =========================================
   // FORM STATE
   // =========================================
 
-  const [
-    showSubjectForm,
-    setShowSubjectForm,
-  ] = useState(false);
+  const [showSubjectForm, setShowSubjectForm] =
+    useState(false);
 
-  const [
-    editingSubjectId,
-    setEditingSubjectId,
-  ] = useState<
-    string | null
-  >(null);
+  const [editingSubjectId, setEditingSubjectId] =
+    useState<string | null>(null);
 
-  const [
-    subjectName,
-    setSubjectName,
-  ] = useState("");
+  const [subjectName, setSubjectName] = useState("");
+  const [subjectCategory, setSubjectCategory] =
+    useState("");
 
-  const [
-    subjectCategory,
-    setSubjectCategory,
-  ] = useState("");
-
-  const [
-    formError,
-    setFormError,
-  ] = useState("");
+  const [formError, setFormError] = useState("");
+  const [storageError, setStorageError] = useState("");
 
   // =========================================
   // WORKSPACE
   // =========================================
 
-  const isStudyWorkspaceOpen =
-    showSubjectForm;
+  const isStudyWorkspaceOpen = showSubjectForm;
 
   useEffect(() => {
-    setStudyWorkspaceOpen(
-      isStudyWorkspaceOpen
-    );
+    setStudyWorkspaceOpen(isStudyWorkspaceOpen);
 
     return () => {
       setStudyWorkspaceOpen(false);
@@ -95,6 +85,221 @@ function Study() {
     isStudyWorkspaceOpen,
     setStudyWorkspaceOpen,
   ]);
+
+  // =========================================
+  // BACKGROUND CLOUD SYNCHRONIZATION
+  // =========================================
+
+  // The synchronization controls now live
+  // in Settings -> Private Account.
+  //
+  // This function continues processing
+  // subject changes in the background.
+  //
+  // The queue remains persistent when
+  // uploads fail.
+
+  const processCloudQueue = useCallback(
+    async (userId: string): Promise<void> => {
+      try {
+        await subjectSyncQueueService.processPendingOperations(
+          userId
+        );
+      } catch (error) {
+        console.error(
+          "StudyQuest background subject synchronization failed:",
+          error
+        );
+
+        // Do not delete pending operations.
+        //
+        // The queue service retains them
+        // for a future retry.
+        //
+        // Settings displays the current
+        // synchronization status.
+      }
+    },
+    []
+  );
+
+  // =========================================
+  // RETRY PENDING CLOUD OPERATIONS
+  // =========================================
+
+  useEffect(() => {
+    if (
+      mode !== "private" ||
+      accountUserId === null
+    ) {
+      return;
+    }
+
+    const userId = accountUserId;
+
+    // Retry when the Study page opens.
+    void processCloudQueue(userId);
+
+    // Retry when the browser reconnects.
+    function handleOnline() {
+      void processCloudQueue(userId);
+    }
+
+    window.addEventListener(
+      "online",
+      handleOnline
+    );
+
+    return () => {
+      window.removeEventListener(
+        "online",
+        handleOnline
+      );
+    };
+  }, [
+    mode,
+    accountUserId,
+    processCloudQueue,
+  ]);
+
+  // =========================================
+  // SAFE LOCAL SAVE
+  // =========================================
+
+  // =========================================
+  // SAFE SUBJECT CHANGE
+  // =========================================
+
+  function persistSubjectChange(
+    updatedSubjects: StudySubject[],
+    change: SubjectChange
+  ): boolean {
+    // =====================================
+    // PRIVATE ACCOUNT VALIDATION
+    // =====================================
+
+    if (accountUserId === null) {
+      setStorageError(
+        "Private Account identification is unavailable. " +
+          "Your subject change was cancelled to protect synchronization."
+      );
+
+      return false;
+    }
+
+    const userId = accountUserId;
+
+    // =====================================
+    // PRESERVE PREVIOUS SUBJECTS
+    // =====================================
+
+    const previousSubjects = subjects;
+
+    // =====================================
+    // STEP 1: SAVE LOCALLY
+    // =====================================
+
+    try {
+      storageService.saveSubjects(
+        updatedSubjects
+      );
+    } catch (error) {
+      console.error(
+        "Failed to save subjects locally:",
+        error
+      );
+
+      setStorageError(
+        "Your subject change could not be saved locally. " +
+          "No new cloud operation was queued."
+      );
+
+      return false;
+    }
+
+    // =====================================
+    // STEP 2: RECORD CLOUD OPERATION
+    // =====================================
+
+    try {
+      if (change.type === "save") {
+        subjectSyncQueueService.enqueueSubjectSave(
+          userId,
+          change.subject
+        );
+      } else {
+        subjectSyncQueueService.enqueueSubjectDelete(
+          userId,
+          change.subjectId
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Failed to record subject sync operation:",
+        error
+      );
+
+      // ===================================
+      // STEP 3: RESTORE PREVIOUS LOCAL DATA
+      // ===================================
+
+      try {
+        storageService.saveSubjects(
+          previousSubjects
+        );
+
+        setSubjects(previousSubjects);
+
+        setStorageError(
+          "The cloud sync operation could not be stored, " +
+            "so StudyQuest restored your previous subjects. " +
+            "Your requested change was cancelled. Please try again."
+        );
+      } catch (rollbackError) {
+        console.error(
+          "CRITICAL: Failed to restore previous subjects:",
+          rollbackError
+        );
+
+        // The original local save succeeded.
+        // Keep the UI consistent with
+        // that locally saved data.
+
+        setSubjects(updatedSubjects);
+
+        setStorageError(
+          "IMPORTANT: Your subject change was saved locally, " +
+            "but cloud synchronization could not be queued " +
+            "and the previous data could not be restored. " +
+            "Do not clear browser data or switch devices. " +
+            "Keep this device's data and resolve the storage problem."
+        );
+      }
+
+      return false;
+    }
+
+    // =====================================
+    // STEP 4: COMMIT LOCAL CHANGE
+    // =====================================
+
+    setSubjects(updatedSubjects);
+    setStorageError("");
+
+    // =====================================
+    // STEP 5: BACKGROUND CLOUD SYNC
+    // =====================================
+
+    // The operation is already stored
+    // in the persistent sync queue.
+    //
+    // A network failure will not remove
+    // the pending operation.
+
+    void processCloudQueue(userId);
+
+    return true;
+  }
 
   // =========================================
   // FORM HELPERS
@@ -122,144 +327,137 @@ function Study() {
   // =========================================
 
   function handleSaveSubject(
-    event:
-      React.FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    const cleanName =
-      subjectName.trim();
-
+    const cleanName = subjectName.trim();
     const cleanCategory =
       subjectCategory.trim();
+
+    // =====================================
+    // VALIDATION
+    // =====================================
 
     if (!cleanName) {
       setFormError(
         "Please enter a subject name."
       );
-
       return;
     }
 
     const subjectAlreadyExists =
       subjects.some(
         (subject) =>
-          subject.name
-            .toLowerCase() ===
+          subject.name.toLowerCase() ===
             cleanName.toLowerCase() &&
-          subject.id !==
-            editingSubjectId
+          subject.id !== editingSubjectId
       );
 
     if (subjectAlreadyExists) {
       setFormError(
         "A subject with this name already exists."
       );
-
       return;
     }
 
-    // =========================================
+    // =====================================
     // EDIT SUBJECT
-    // =========================================
+    // =====================================
 
     if (editingSubjectId) {
-      const updatedSubjects =
-        subjects.map(
-          (subject) => {
-            if (
-              subject.id !==
-              editingSubjectId
-            ) {
-              return subject;
-            }
-
-            return {
-              ...subject,
-
-              name:
-                cleanName,
-
-              category:
-                cleanCategory ||
-                undefined,
-            };
-          }
+      const existingSubject =
+        subjects.find(
+          (subject) =>
+            subject.id === editingSubjectId
         );
 
-      setSubjects(
-        updatedSubjects
+      if (!existingSubject) {
+        setFormError(
+          "The selected subject could not be found."
+        );
+        return;
+      }
+
+      const editedSubject: StudySubject = {
+        ...existingSubject,
+        name: cleanName,
+        category:
+          cleanCategory || undefined,
+      };
+
+      const updatedSubjects =
+        subjects.map(
+          (subject) =>
+            subject.id === editingSubjectId
+              ? editedSubject
+              : subject
+        );
+
+      const saved = persistSubjectChange(
+        updatedSubjects,
+        {
+          type: "save",
+          subject: editedSubject,
+        }
       );
 
-      storageService.saveSubjects(
-        updatedSubjects
-      );
+      if (!saved) {
+        return;
+      }
 
       closeForm();
-
       return;
     }
 
-    // =========================================
+    // =====================================
     // CREATE SUBJECT
-    // =========================================
+    // =====================================
 
-    const newSubject:
-      StudySubject = {
-        id:
-          crypto.randomUUID(),
-
-        name:
-          cleanName,
-
-        category:
-          cleanCategory ||
-          undefined,
-
-        progress: 0,
-
-        createdAt:
-          new Date().toISOString(),
-      };
+    const newSubject: StudySubject = {
+      id: crypto.randomUUID(),
+      name: cleanName,
+      category:
+        cleanCategory || undefined,
+      progress: 0,
+      createdAt:
+        new Date().toISOString(),
+    };
 
     const updatedSubjects = [
       ...subjects,
       newSubject,
     ];
 
-    setSubjects(
-      updatedSubjects
+    const saved = persistSubjectChange(
+      updatedSubjects,
+      {
+        type: "save",
+        subject: newSubject,
+      }
     );
 
-    storageService.saveSubjects(
-      updatedSubjects
-    );
+    if (!saved) {
+      return;
+    }
 
     closeForm();
   }
 
   // =========================================
-  // EDIT
+  // EDIT SUBJECT
   // =========================================
 
   function handleEditSubject(
-    subject:
-      StudySubject
+    subject: StudySubject
   ) {
-    setEditingSubjectId(
-      subject.id
-    );
-
-    setSubjectName(
-      subject.name
-    );
-
+    setEditingSubjectId(subject.id);
+    setSubjectName(subject.name);
     setSubjectCategory(
       subject.category ?? ""
     );
 
     setFormError("");
-
     setShowSubjectForm(true);
 
     window.scrollTo({
@@ -269,15 +467,34 @@ function Study() {
   }
 
   // =========================================
-  // DELETE
+  // DELETE SUBJECT
   // =========================================
 
   function handleDeleteSubject(
-    subject:
-      StudySubject
+    subject: StudySubject
   ) {
-    const activeTimer =
-      storageService.getActiveTimer();
+    let activeTimer;
+
+    // =====================================
+    // VERIFY ACTIVE TIMER
+    // =====================================
+
+    try {
+      activeTimer =
+        storageService.getActiveTimer();
+    } catch (error) {
+      console.error(
+        "Could not check active timer:",
+        error
+      );
+
+      setStorageError(
+        "Could not verify the active study timer. " +
+          "Deletion was cancelled to protect your data."
+      );
+
+      return;
+    }
 
     if (
       activeTimer?.subjectId ===
@@ -290,31 +507,40 @@ function Study() {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Delete "${subject.name}"?\n\nThis subject will be permanently removed.`
-      );
+    // =====================================
+    // CONFIRM DELETION
+    // =====================================
+
+    const confirmed = window.confirm(
+      `Delete "${subject.name}"?\n\nThis subject will be permanently removed.`
+    );
 
     if (!confirmed) {
       return;
     }
 
+    // =====================================
+    // REMOVE SUBJECT
+    // =====================================
+
     const updatedSubjects =
       subjects.filter(
-        (
-          currentSubject
-        ) =>
+        (currentSubject) =>
           currentSubject.id !==
           subject.id
       );
 
-    setSubjects(
-      updatedSubjects
+    const deleted = persistSubjectChange(
+      updatedSubjects,
+      {
+        type: "delete",
+        subjectId: subject.id,
+      }
     );
 
-    storageService.saveSubjects(
-      updatedSubjects
-    );
+    if (!deleted) {
+      return;
+    }
 
     if (
       editingSubjectId ===
@@ -323,6 +549,10 @@ function Study() {
       closeForm();
     }
   }
+
+  // =========================================
+  // RENDER
+  // =========================================
 
   return (
     <div className="page-container">
@@ -336,9 +566,7 @@ function Study() {
             FOCUS
           </p>
 
-          <h1>
-            Study
-          </h1>
+          <h1>Study</h1>
 
           <p className="page-description">
             Choose what you want
@@ -352,16 +580,29 @@ function Study() {
           <button
             type="button"
             className="primary-button subject-add-button"
-            onClick={
-              openCreateForm
-            }
+            onClick={openCreateForm}
           >
             <Plus size={18} />
-
             Add subject
           </button>
         )}
       </header>
+
+      {/* ================================= */}
+      {/* LOCAL STORAGE ERROR NOTICE */}
+      {/* ================================= */}
+
+      {storageError && (
+        <section
+          className="panel"
+          role="alert"
+          aria-live="polite"
+        >
+          <p className="form-error">
+            {storageError}
+          </p>
+        </section>
+      )}
 
       {/* ================================= */}
       {/* TIMER */}
@@ -370,9 +611,7 @@ function Study() {
       {subjects.length > 0 &&
         !isStudyWorkspaceOpen && (
           <StudyTimer
-            subjects={
-              subjects
-            }
+            subjects={subjects}
           />
         )}
 
@@ -406,9 +645,7 @@ function Study() {
             <button
               type="button"
               className="icon-button"
-              onClick={
-                closeForm
-              }
+              onClick={closeForm}
               aria-label="Close subject form"
             >
               <X size={20} />
@@ -417,35 +654,25 @@ function Study() {
 
           <form
             className="subject-form"
-            onSubmit={
-              handleSaveSubject
-            }
+            onSubmit={handleSaveSubject}
           >
             <div className="form-group">
               <label htmlFor="subject-name">
                 Subject name
-
                 <span>*</span>
               </label>
 
               <input
                 id="subject-name"
                 type="text"
-                value={
-                  subjectName
-                }
+                value={subjectName}
                 maxLength={50}
                 placeholder="Example: Java"
                 autoFocus
-                onChange={(
-                  event
-                ) => {
+                onChange={(event) => {
                   setSubjectName(
-                    event
-                      .target
-                      .value
+                    event.target.value
                   );
-
                   setFormError("");
                 }}
               />
@@ -459,18 +686,12 @@ function Study() {
               <input
                 id="subject-category"
                 type="text"
-                value={
-                  subjectCategory
-                }
+                value={subjectCategory}
                 maxLength={30}
                 placeholder="Example: Programming"
-                onChange={(
-                  event
-                ) =>
+                onChange={(event) =>
                   setSubjectCategory(
-                    event
-                      .target
-                      .value
+                    event.target.value
                   )
                 }
               />
@@ -486,9 +707,7 @@ function Study() {
               <button
                 type="button"
                 className="secondary-button"
-                onClick={
-                  closeForm
-                }
+                onClick={closeForm}
               >
                 Cancel
               </button>
@@ -515,34 +734,24 @@ function Study() {
           <section className="panel">
             <div className="empty-state">
               <div className="empty-state-icon large">
-                <BookOpen
-                  size={30}
-                />
+                <BookOpen size={30} />
               </div>
 
               <h2>
-                Create your first
-                subject.
+                Create your first subject.
               </h2>
 
               <p>
-                Subjects help
-                StudyQuest
-                understand what
-                you are learning.
+                Subjects help StudyQuest
+                understand what you are learning.
               </p>
 
               <button
                 type="button"
                 className="primary-button empty-state-button"
-                onClick={
-                  openCreateForm
-                }
+                onClick={openCreateForm}
               >
-                <Plus
-                  size={18}
-                />
-
+                <Plus size={18} />
                 Create subject
               </button>
             </div>
@@ -562,14 +771,12 @@ function Study() {
               </p>
 
               <h2>
-                What are you
-                learning?
+                What are you learning?
               </h2>
             </div>
 
             <span className="subject-count">
               {subjects.length}
-
               {subjects.length === 1
                 ? " subject"
                 : " subjects"}
@@ -577,24 +784,14 @@ function Study() {
           </div>
 
           <div className="subjects-grid">
-            {subjects.map(
-              (subject) => (
-                <SubjectCard
-                  key={
-                    subject.id
-                  }
-                  subject={
-                    subject
-                  }
-                  onEdit={
-                    handleEditSubject
-                  }
-                  onDelete={
-                    handleDeleteSubject
-                  }
-                />
-              )
-            )}
+            {subjects.map((subject) => (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                onEdit={handleEditSubject}
+                onDelete={handleDeleteSubject}
+              />
+            ))}
           </div>
         </section>
       )}
