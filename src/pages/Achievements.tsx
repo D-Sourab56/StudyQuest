@@ -305,13 +305,6 @@ function Achievements() {
       achievement.current > 0
   );
 
-  const totalAchievements = achievements.length;
-
-  const overallProgress =
-    totalAchievements > 0
-      ? (unlockedCount / totalAchievements) * 100
-      : 0;
-
   // =========================================
   // RENDER
   // =========================================
@@ -390,49 +383,29 @@ function Achievements() {
           >
             <Trophy size={28} />
 
-            <strong
-              style={{
-                fontSize: 26,
-                color: "var(--text-primary)",
-              }}
-            >
-              {unlockedCount}/{totalAchievements}
-            </strong>
+            <div style={{ textAlign: "center" }}>
+              <strong
+                style={{
+                  display: "block",
+                  fontSize: 28,
+                  color: "var(--text-primary)",
+                }}
+              >
+                {unlockedCount}
+              </strong>
+
+              <span
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Unlocked
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* OVERALL PROGRESS BAR */}
-
-        <div
-          style={{
-            height: 10,
-            marginTop: 24,
-            background:
-              "color-mix(in srgb, var(--text-primary) 10%, transparent)",
-            borderRadius: 999,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${overallProgress}%`,
-              background: "var(--accent-dark)",
-              borderRadius: 999,
-              transition: "width 0.3s ease",
-            }}
-          />
-        </div>
-
-        <p
-          style={{
-            marginTop: 10,
-            color: "var(--text-secondary)",
-            fontSize: 13,
-          }}
-        >
-          {unlockedCount} of {totalAchievements} achievements unlocked
-        </p>
       </section>
 
       {/* =====================================

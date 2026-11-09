@@ -148,7 +148,8 @@ function Settings() {
         className="panel"
         aria-labelledby="study-settings-title"
         style={{
-          maxWidth: 760,
+          width: "100%",
+          boxSizing: "border-box",
           padding: "clamp(20px, 4vw, 32px)",
         }}
       >

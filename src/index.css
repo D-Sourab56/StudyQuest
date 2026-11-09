@@ -5847,3 +5847,71 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* =========================================
+   STUDY TIMER — SUBJECT DROPDOWN
+   ========================================= */
+
+.study-timer-panel .subject-select-menu {
+  max-height: 208px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: #f1faf6;
+
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a5c5b5 transparent;
+}
+
+/* Keep each option at a consistent height */
+
+.study-timer-panel .subject-select-option {
+  height: 64px;
+  box-sizing: border-box;
+}
+
+/* Opaque background for dark mode */
+
+html[data-theme="dark"]
+.study-timer-panel .subject-select-menu {
+  background: #0f1f17;
+  scrollbar-color: #426b58 transparent;
+}
+
+/* =========================================
+   HISTORY — SUBJECT DROPDOWN
+   ========================================= */
+
+.history-glass-select .subject-select-menu {
+  max-height: 208px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: #f1faf6;
+
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #a5c5b5 transparent;
+}
+
+/* Display 3 options at a time */
+
+.history-glass-select .subject-select-option {
+  height: 64px;
+  box-sizing: border-box;
+}
+
+/* Dark mode */
+
+html[data-theme="dark"]
+.history-glass-select .subject-select-menu {
+  background: #0f1f17;
+  scrollbar-color: #426b58 transparent;
+}
