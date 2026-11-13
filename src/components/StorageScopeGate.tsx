@@ -2,10 +2,13 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
 import type { ReactNode } from "react";
+
+import { BrowserQRCodeReader } from "@zxing/browser";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -16,10 +19,25 @@ import {
 import { createPrivateAccount } from "../services/authService";
 import { storageScopeService } from "../services/storageScopeService";
 import { settingsService } from "../services/settingsService";
-import { supabase } from "../lib/supabase";
+import {
+  restoreAccountSubjects,
+} from "../services/subjectRestoreService";
+
+import {
+  supabase,
+  loginWithAccountQr,
+} from "../lib/supabase";
+
+// =========================================
+// CONSTANTS
+// =========================================
 
 const STORAGE_PREFERENCE_KEY =
   "studyquest:storage-preference:v1";
+
+// =========================================
+// TYPES
+// =========================================
 
 interface StorageScopeGateProps {
   children: ReactNode;
@@ -30,14 +48,29 @@ interface ActivationState {
   error: string | null;
 }
 
+// =========================================
+// STORAGE SCOPE GATE
+// =========================================
+
 export function StorageScopeGate({
   children,
 }: StorageScopeGateProps) {
+  // =========================================
+  // AUTHENTICATION
+  // =========================================
+
   const {
     user,
     isLoading,
     isAnonymousAccount,
+    isQrAccount,
+    accountUserId: authenticatedAccountId,
+    qrAuthError,
   } = useAuth();
+
+  // =========================================
+  // STATE
+  // =========================================
 
   const [activation, setActivation] =
     useState<ActivationState | null>(null);
@@ -51,19 +84,44 @@ export function StorageScopeGate({
   const [actionError, setActionError] =
     useState<string | null>(null);
 
+  // =========================================
+  // QR SCANNER STATE
+  // =========================================
+
+  const [isQrScannerOpen, setIsQrScannerOpen] =
+    useState(false);
+
+  const [isQrSigningIn, setIsQrSigningIn] =
+    useState(false);
+
+  const qrVideoRef =
+    useRef<HTMLVideoElement>(null);
+
+  const qrScanLocked = useRef(false);
+
+  // =========================================
+  // CURRENT ACCOUNT ID
+  // =========================================
+
   const accountUserId =
-    !isLoading && isAnonymousAccount && user
-      ? user.id
+    !isLoading
+      ? authenticatedAccountId
       : null;
 
-  // Activate only the storage belonging to
-  // the authenticated Supabase account.
+  // =========================================
+  // ACTIVATE ACCOUNT STORAGE
+  // =========================================
+
   useEffect(() => {
     if (accountUserId === null) {
       return;
     }
 
     let cancelled = false;
+
+    let restoreTimedOut = false;
+
+    let restoreTimeout: number | null = null;
 
     function reportResult(error: string | null) {
       queueMicrotask(() => {
@@ -90,8 +148,7 @@ export function StorageScopeGate({
       document.documentElement.style.colorScheme =
         settings.theme;
 
-      // Retain compatibility with the existing
-      // storage preference key.
+      // Preserve the existing storage preference.
       try {
         localStorage.setItem(
           STORAGE_PREFERENCE_KEY,
@@ -101,7 +158,47 @@ export function StorageScopeGate({
         // Optional preference storage.
       }
 
-      reportResult(null);
+      // Restore cloud subjects only in the
+      // isolated QR testing environment.
+      if (import.meta.env.MODE !== "qr") {
+        reportResult(null);
+      } else {
+        // Never block local-first StudyQuest
+        // indefinitely because of a network issue.
+        restoreTimeout = window.setTimeout(() => {
+          restoreTimedOut = true;
+
+          console.warn(
+            "Cloud subject restoration timed out. " +
+            "Continuing with local subjects."
+          );
+
+          reportResult(null);
+        }, 8000);
+
+        void restoreAccountSubjects(
+          accountUserId,
+          () => cancelled || restoreTimedOut
+        )
+          .catch((error: unknown) => {
+            if (!cancelled && !restoreTimedOut) {
+              console.warn(
+                "Could not restore cloud subjects. " +
+                "Existing local data was preserved.",
+                error
+              );
+            }
+          })
+          .finally(() => {
+            if (restoreTimeout !== null) {
+              window.clearTimeout(restoreTimeout);
+            }
+
+            if (!restoreTimedOut) {
+              reportResult(null);
+            }
+          });
+      }
     } catch (error) {
       console.error(
         "StudyQuest account storage failed:",
@@ -117,23 +214,41 @@ export function StorageScopeGate({
 
     return () => {
       cancelled = true;
+
+      if (restoreTimeout !== null) {
+        window.clearTimeout(restoreTimeout);
+      }
     };
   }, [accountUserId]);
+
+  // =========================================
+  // ACCOUNT READINESS
+  // =========================================
 
   const isAccountReady =
     accountUserId !== null &&
     activation?.userId === accountUserId &&
     activation.error === null;
 
-  // Temporary compatibility method.
-  // Account activation is now automatic.
+  // Existing compatibility method.
+  // Account activation is automatic.
   const selectPrivateMode = useCallback(
     () => isAccountReady,
     [isAccountReady]
   );
 
+  // =========================================
+  // CREATE PRIVATE ACCOUNT
+  // =========================================
+
   async function handleCreateAccount() {
-    if (isLoading || isCreating || user !== null) {
+    if (
+      isLoading ||
+      isCreating ||
+      isQrSigningIn ||
+      user !== null ||
+      isQrAccount
+    ) {
       return;
     }
 
@@ -157,8 +272,7 @@ export function StorageScopeGate({
       }
 
       // AuthContext receives the new Supabase
-      // session. The effect above will then
-      // activate its account-specific storage.
+      // session and activates its storage.
     } catch (error) {
       setActionError(
         error instanceof Error
@@ -169,6 +283,10 @@ export function StorageScopeGate({
       setIsCreating(false);
     }
   }
+
+  // =========================================
+  // LEGACY ACCOUNT SIGN OUT
+  // =========================================
 
   async function handleLegacySignOut() {
     if (
@@ -193,12 +311,6 @@ export function StorageScopeGate({
     setIsSigningOut(true);
 
     try {
-      if (!supabase) {
-        throw new Error(
-          "Supabase is not configured."
-        );
-      }
-
       const { error } =
         await supabase.auth.signOut();
 
@@ -216,8 +328,128 @@ export function StorageScopeGate({
     }
   }
 
-  // Wait until Supabase finishes checking
-  // the browser's existing session.
+  // =========================================
+  // DIRECT QR LOGIN SCANNER
+  // =========================================
+
+  useEffect(() => {
+    if (
+      !isQrScannerOpen ||
+      !qrVideoRef.current
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    let scannerControls:
+      | { stop: () => void }
+      | null = null;
+
+    const reader = new BrowserQRCodeReader();
+
+    async function startScanner() {
+      try {
+        const videoElement = qrVideoRef.current;
+
+        if (!videoElement) {
+          return;
+        }
+
+        const controls =
+          await reader.decodeFromVideoDevice(
+            undefined,
+            videoElement,
+            (result, _error, controls) => {
+              if (
+                !result ||
+                cancelled ||
+                qrScanLocked.current
+              ) {
+                return;
+              }
+
+              const qrPayload =
+                result.getText().trim();
+
+              // Accept only StudyQuest QR codes.
+              if (
+                !/^SQ1:[a-f0-9]{64}$/.test(
+                  qrPayload
+                )
+              ) {
+                setActionError(
+                  "This is not a valid StudyQuest account QR code."
+                );
+                return;
+              }
+
+              // Prevent duplicate login requests.
+              qrScanLocked.current = true;
+
+              controls.stop();
+
+              setActionError(null);
+              setIsQrSigningIn(true);
+
+              // Authenticate directly using
+              // the permanent QR credential.
+              void loginWithAccountQr(qrPayload)
+                .then(() => {
+                  if (!cancelled) {
+                    window.location.reload();
+                  }
+                })
+                .catch((error: unknown) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  setActionError(
+                    error instanceof Error
+                      ? error.message
+                      : "QR Login failed."
+                  );
+
+                  setIsQrSigningIn(false);
+                  setIsQrScannerOpen(false);
+                  qrScanLocked.current = false;
+                });
+            }
+          );
+
+        if (cancelled) {
+          controls.stop();
+        } else {
+          scannerControls = controls;
+        }
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setActionError(
+          error instanceof Error
+            ? error.message
+            : "Unable to access the camera."
+        );
+
+        setIsQrScannerOpen(false);
+      }
+    }
+
+    void startScanner();
+
+    return () => {
+      cancelled = true;
+      scannerControls?.stop();
+    };
+  }, [isQrScannerOpen]);
+
+  // =========================================
+  // LOADING SCREEN
+  // =========================================
+
   if (isLoading) {
     return (
       <main className="page-container">
@@ -231,8 +463,11 @@ export function StorageScopeGate({
     );
   }
 
-  // No session: account creation is available,
-  if (user === null) {
+  // =========================================
+  // NO ACCOUNT — CREATE OR SCAN QR
+  // =========================================
+
+  if (user === null && !isQrAccount) {
     return (
       <main className="page-container">
         <section
@@ -243,60 +478,199 @@ export function StorageScopeGate({
             padding: 32,
           }}
         >
+          {/* PAGE HEADING */}
+
           <p className="panel-label">
             WELCOME TO STUDYQUEST
           </p>
 
-          <h1 style={{
-            color: "var(--text-primary)",
-            margin: "8px 0 16px",
-          }}>
-            Create your account
+          <h1
+            style={{
+              color: "var(--text-primary)",
+              margin: "8px 0 16px",
+            }}
+          >
+            Welcome to StudyQuest
           </h1>
 
           <p className="page-description">
-            StudyQuest requires a private account
-            to save your study progress.
+            Create a new private account or
+            access your existing account using
+            its permanent QR code.
           </p>
 
-          <p
-            className="page-description"
-            style={{ fontSize: 12 }}
+          {/* ACCOUNT CREATION */}
+
+          <div style={{ marginTop: 24 }}>
+            <h2
+              style={{
+                fontSize: 19,
+                color: "var(--text-primary)",
+              }}
+            >
+              New to StudyQuest?
+            </h2>
+
+            <p className="page-description">
+              Create a private account to start
+              tracking your study progress.
+            </p>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={
+                isCreating ||
+                isQrSigningIn
+              }
+              onClick={handleCreateAccount}
+              style={{ marginTop: 12 }}
+            >
+              {isCreating
+                ? "Creating Account..."
+                : "Create Private Account"}
+            </button>
+          </div>
+
+          {/* ========================================= */}
+          {/* PERMANENT QR LOGIN */}
+          {/* ========================================= */}
+
+          <div
+            style={{
+              marginTop: 28,
+              paddingTop: 24,
+              borderTop:
+                "1px solid var(--border-color, rgba(128,128,128,0.2))",
+            }}
           >
-            QR login and account recovery are not
-            available yet. Until they are ready,
-            losing this browser session may mean
-            losing access to the account.
-          </p>
+            <h2
+              style={{
+                fontSize: 19,
+                color: "var(--text-primary)",
+              }}
+            >
+              Already have an account?
+            </h2>
 
-          {actionError && (
+            <p className="page-description">
+              Scan your permanent StudyQuest QR
+              code to access your existing account.
+            </p>
+
+            {/* SCANNER TOGGLE */}
+
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={
+                isQrSigningIn ||
+                isCreating
+              }
+              onClick={() => {
+                if (isQrScannerOpen) {
+                  setIsQrScannerOpen(false);
+                } else {
+                  qrScanLocked.current = false;
+                  setActionError(null);
+                  setIsQrScannerOpen(true);
+                }
+              }}
+              style={{ marginTop: 12 }}
+            >
+              {isQrSigningIn
+                ? "Signing In..."
+                : isQrScannerOpen
+                  ? "Close Scanner"
+                  : "Scan QR Code"}
+            </button>
+
+            {/* CAMERA SCANNER */}
+
+            {isQrScannerOpen && (
+              <div style={{ marginTop: 20 }}>
+                <video
+                  ref={qrVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  aria-label="QR code camera scanner"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: 360,
+                    margin: "0 auto",
+                    borderRadius: 14,
+                    background: "#111",
+                  }}
+                />
+
+                <p
+                  className="page-description"
+                  style={{
+                    textAlign: "center",
+                    fontSize: 12,
+                    marginTop: 12,
+                  }}
+                >
+                  Point your camera at your
+                  StudyQuest account QR code.
+                </p>
+              </div>
+            )}
+
+            {/* SIGNING IN MESSAGE */}
+
+            {isQrSigningIn && (
+              <p
+                className="page-description"
+                role="status"
+                style={{ marginTop: 16 }}
+              >
+                Verifying your QR code and
+                opening your account...
+              </p>
+            )}
+          </div>
+
+          {/* ERROR MESSAGE */}
+
+          {(actionError || qrAuthError) && (
             <p
               role="alert"
-              style={{ color: "var(--danger)" }}
+              style={{
+                color: "var(--danger)",
+                marginTop: 20,
+              }}
             >
-              {actionError}
+              {actionError || qrAuthError}
             </p>
           )}
 
-          <button
-            type="button"
-            className="primary-button"
-            disabled={isCreating}
-            onClick={handleCreateAccount}
-            style={{ marginTop: 20 }}
+          {/* SECURITY NOTICE */}
+
+          <p
+            className="page-description"
+            style={{
+              fontSize: 12,
+              marginTop: 24,
+            }}
           >
-            {isCreating
-              ? "Creating Account..."
-              : "Create Private Account"}
-          </button>
+            Your permanent QR code is a login
+            credential. Keep it private because
+            anyone with a copy may access
+            your account.
+          </p>
         </section>
       </main>
     );
   }
 
-  // Existing non-anonymous accounts are not
-  // automatically replaced or signed out.
-  if (!isAnonymousAccount) {
+  // =========================================
+  // LEGACY NON-ANONYMOUS ACCOUNT
+  // =========================================
+
+  if (!isAnonymousAccount && !isQrAccount) {
     return (
       <main className="page-container">
         <section
@@ -307,10 +681,12 @@ export function StorageScopeGate({
             padding: 32,
           }}
         >
-          <h1 style={{
-            color: "var(--text-primary)",
-            marginTop: 0,
-          }}>
+          <h1
+            style={{
+              color: "var(--text-primary)",
+              marginTop: 0,
+            }}
+          >
             Previous account detected
           </h1>
 
@@ -323,7 +699,9 @@ export function StorageScopeGate({
           {actionError && (
             <p
               role="alert"
-              style={{ color: "var(--danger)" }}
+              style={{
+                color: "var(--danger)",
+              }}
             >
               {actionError}
             </p>
@@ -344,8 +722,10 @@ export function StorageScopeGate({
     );
   }
 
-  // Never mount the study app when activating
-  // the authenticated account's storage failed.
+  // =========================================
+  // STORAGE ACTIVATION ERROR
+  // =========================================
+
   if (
     activation?.userId === accountUserId &&
     activation.error !== null
@@ -360,10 +740,12 @@ export function StorageScopeGate({
             padding: 32,
           }}
         >
-          <h1 style={{
-            color: "var(--text-primary)",
-            marginTop: 0,
-          }}>
+          <h1
+            style={{
+              color: "var(--text-primary)",
+              marginTop: 0,
+            }}
+          >
             Storage unavailable
           </h1>
 
@@ -375,14 +757,16 @@ export function StorageScopeGate({
           </p>
 
           <p className="page-description">
-            Your existing records have not been
-            intentionally deleted.
+            Your existing records have not
+            been intentionally deleted.
           </p>
 
           <button
             type="button"
             className="primary-button"
-            onClick={() => window.location.reload()}
+            onClick={() =>
+              window.location.reload()
+            }
           >
             Reload StudyQuest
           </button>
@@ -390,6 +774,10 @@ export function StorageScopeGate({
       </main>
     );
   }
+
+  // =========================================
+  // WAIT FOR ACCOUNT STORAGE
+  // =========================================
 
   if (!isAccountReady) {
     return (
@@ -404,8 +792,10 @@ export function StorageScopeGate({
     );
   }
 
-  // Mount study components only after the
-  // authenticated account scope is active.
+  // =========================================
+  // ACTIVATE STUDYQUEST
+  // =========================================
+
   return (
     <StorageModeContext.Provider
       value={{

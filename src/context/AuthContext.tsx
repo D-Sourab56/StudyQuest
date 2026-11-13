@@ -9,7 +9,11 @@ import {
 import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 
-import { supabase } from "../lib/supabase";
+import {
+  supabase,
+  getSavedQrDevice,
+  getQrAccessToken,
+} from "../lib/supabase";
 
 // =========================================
 // TYPES
@@ -20,6 +24,9 @@ interface AuthContextValue {
   isLoading: boolean;
   isPrivateAccount: boolean;
   isAnonymousAccount: boolean;
+  isQrAccount: boolean;
+  accountUserId: string | null;
+  qrAuthError: string | null;
 }
 
 interface AuthProviderProps {
@@ -45,6 +52,12 @@ export function AuthProvider({
     null
   );
 
+  const [qrAccountId, setQrAccountId] =
+    useState<string | null>(null);
+
+  const [qrAuthError, setQrAuthError] =
+    useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(
     true
   );
@@ -54,16 +67,78 @@ export function AuthProvider({
   // =========================================
 
   useEffect(() => {
+    let active = true;
+    let nativeReady = false;
+    let qrReady = false;
+
+    function finishLoading() {
+      if (
+        active &&
+        nativeReady &&
+        qrReady
+      ) {
+        setIsLoading(false);
+      }
+    }
+
+    // Existing Supabase Auth session
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!active) return;
+
         setUser(session?.user ?? null);
-        setIsLoading(false);
+
+        nativeReady = true;
+        finishLoading();
       }
     );
 
+    // Restore previously authorized QR device
+    async function restoreQrAccount() {
+      try {
+        const device = getSavedQrDevice();
+
+        if (!device) {
+          return;
+        }
+
+        const token = await getQrAccessToken();
+
+        if (!active) return;
+
+        if (!token) {
+          throw new Error(
+            "QR device session unavailable."
+          );
+        }
+
+        setQrAccountId(device.accountId);
+        setQrAuthError(null);
+      } catch (error) {
+        if (!active) return;
+
+        console.error(
+          "StudyQuest QR session restoration failed:",
+          error
+        );
+
+        setQrAuthError(
+          error instanceof Error
+            ? error.message
+            : "Unable to restore QR login."
+        );
+      } finally {
+        qrReady = true;
+        finishLoading();
+      }
+    }
+
+    void restoreQrAccount();
+
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -75,14 +150,22 @@ export function AuthProvider({
   const isAnonymousAccount =
     user?.is_anonymous === true;
 
-  // A private StudyQuest account currently
-  // uses anonymous Supabase authentication.
-  //
-  // An existing email-based Supabase session
-  // must not be mistaken for a private account.
+  // A QR account is valid only after the
+  // backend has verified the device credential.
+  const isQrAccount =
+    user === null &&
+    qrAccountId !== null;
 
   const isPrivateAccount =
-    user !== null && isAnonymousAccount;
+    (user !== null && isAnonymousAccount) ||
+    isQrAccount;
+
+  const accountUserId =
+    isAnonymousAccount && user
+      ? user.id
+      : isQrAccount
+        ? qrAccountId
+        : null;
 
   // =========================================
   // PROVIDER
@@ -95,6 +178,9 @@ export function AuthProvider({
         isLoading,
         isPrivateAccount,
         isAnonymousAccount,
+        isQrAccount,
+        accountUserId,
+        qrAuthError,
       }}
     >
       {children}
@@ -108,9 +194,7 @@ export function AuthProvider({
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  const context = useContext(
-    AuthContext
-  );
+  const context = useContext(AuthContext);
 
   if (!context) {
     throw new Error(

@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 
@@ -7,25 +6,14 @@ import { BrowserRouter } from "react-router";
 import App from "./App";
 
 import { AuthProvider } from "./context/AuthContext";
+
 import { StudyTimerProvider } from "./context/StudyTimerContext";
 
 import { StorageScopeGate } from "./components/StorageScopeGate";
 
-import { settingsService } from "./services/settingsService";
+import { SettingsInitializer } from "./components/SettingsInitializer";
 
 import "./index.css";
-
-// =========================================
-// INITIAL SETTINGS
-// =========================================
-
-const initialSettings = settingsService.getSettings();
-
-document.documentElement.dataset.theme =
-  initialSettings.theme;
-
-document.documentElement.style.colorScheme =
-  initialSettings.theme;
 
 // =========================================
 // APPLICATION ROOT
@@ -38,9 +26,11 @@ ReactDOM.createRoot(
     <BrowserRouter>
       <AuthProvider>
         <StorageScopeGate>
-          <StudyTimerProvider>
-            <App />
-          </StudyTimerProvider>
+          <SettingsInitializer>
+            <StudyTimerProvider>
+              <App />
+            </StudyTimerProvider>
+          </SettingsInitializer>
         </StorageScopeGate>
       </AuthProvider>
     </BrowserRouter>

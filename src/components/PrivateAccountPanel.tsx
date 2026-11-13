@@ -16,6 +16,7 @@ import { supabase } from "../lib/supabase";
 import { createPrivateAccount } from "../services/authService";
 
 import { SubjectSyncStatus } from "./SubjectSyncStatus";
+import QRCode from "qrcode";
 
 // =========================================
 // PRIVATE ACCOUNT PANEL
@@ -26,6 +27,8 @@ export function PrivateAccountPanel() {
     user,
     isAnonymousAccount,
     isLoading,
+    isPrivateAccount,
+    isQrAccount,
   } = useAuth();
 
   const {
@@ -60,8 +63,7 @@ export function PrivateAccountPanel() {
     isCreating ||
     isSigningOut;
 
-  const hasPrivateSession =
-    user !== null && isAnonymousAccount;
+  const hasPrivateSession = isPrivateAccount;
 
   const hasLegacySession =
     user !== null && !isAnonymousAccount;
@@ -69,15 +71,17 @@ export function PrivateAccountPanel() {
   const isPrivateMode =
     hasPrivateSession && mode === "private";
 
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const [isQrLoading, setIsQrLoading] = useState(false);
+
   // =========================================
   // CREATE PRIVATE ACCOUNT
   // =========================================
 
   async function handleCreateAccount() {
-    if (isBusy || user !== null) {
+    if (isBusy || user !== null || isQrAccount) {
       return;
     }
-
     setIsCreating(true);
     setError(null);
     setNotice(null);
@@ -192,6 +196,82 @@ export function PrivateAccountPanel() {
       setIsSigningOut(false);
     }
   }
+
+
+  // =========================================
+  // PERMANENT ACCOUNT QR
+  // =========================================
+
+  async function handleShowAccountQr() {
+    if (!user || !isAnonymousAccount || isQrLoading) {
+      return;
+    }
+
+    if (qrImage) {
+      setQrImage(null);
+      return;
+    }
+
+    setIsQrLoading(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const storageKey =
+        `studyquest:account-qr:v1:${user.id}`;
+
+      let qrPayload = localStorage.getItem(storageKey);
+
+      if (
+        !qrPayload ||
+        !/^SQ1:[a-f0-9]{64}$/.test(qrPayload)
+      ) {
+        const { data, error: functionError } =
+          await supabase.functions.invoke<{
+            created: boolean;
+            qrPayload: string;
+          }>("qr-login", {
+            body: { action: "register" },
+          });
+
+        if (functionError) {
+          throw new Error(
+            "Could not retrieve your account QR. " +
+            "Ensure the QR Login backend is available. " +
+            "If a QR was already registered elsewhere, " +
+            "it must be regenerated."
+          );
+        }
+
+        if (
+          !data ||
+          !/^SQ1:[a-f0-9]{64}$/.test(data.qrPayload)
+        ) {
+          throw new Error("Invalid account QR response.");
+        }
+
+        qrPayload = data.qrPayload;
+        localStorage.setItem(storageKey, qrPayload);
+      }
+
+      const image = await QRCode.toDataURL(qrPayload, {
+        width: 260,
+        margin: 2,
+        errorCorrectionLevel: "M",
+      });
+
+      setQrImage(image);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not display your account QR."
+      );
+    } finally {
+      setIsQrLoading(false);
+    }
+  }
+
 
   // =========================================
   // RENDER
@@ -318,6 +398,81 @@ export function PrivateAccountPanel() {
           <div style={{ marginTop: 22 }}>
             <SubjectSyncStatus />
           </div>
+
+          {/* ========================================= */}
+          {/* PERMANENT QR LOGIN */}
+          {/* ========================================= */}
+
+          <div
+            style={{
+              marginTop: 24,
+              padding: 20,
+              borderRadius: 18,
+              border: "1px solid var(--border-color, rgba(128,128,128,0.2))",
+              textAlign: "center",
+            }}
+          >
+            <h3
+              style={{
+                margin: "0 0 10px",
+                color: "var(--text-primary)",
+              }}
+            >
+              Your Account QR Code
+            </h3>
+
+            <p className="page-description">
+              Use your permanent QR code to sign in
+              to StudyQuest on another device.
+            </p>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={isBusy || isQrLoading}
+              onClick={handleShowAccountQr}
+              style={{ marginTop: 12 }}
+            >
+              {isQrLoading
+                ? "Loading QR Code..."
+                : qrImage
+                  ? "Hide QR Code"
+                  : "Show My QR Code"}
+            </button>
+
+            {qrImage && (
+              <div style={{ marginTop: 20 }}>
+                <img
+                  src={qrImage}
+                  alt="Your permanent StudyQuest login QR code"
+                  width={260}
+                  height={260}
+                  style={{
+                    display: "block",
+                    maxWidth: "100%",
+                    height: "auto",
+                    margin: "0 auto",
+                    padding: 12,
+                    background: "#ffffff",
+                    borderRadius: 12,
+                    boxSizing: "border-box",
+                  }}
+                />
+
+                <p
+                  className="page-description"
+                  style={{
+                    marginTop: 12,
+                    fontSize: 12,
+                  }}
+                >
+                  Keep this code private. Anyone with
+                  a copy can access your account.
+                </p>
+              </div>
+            )}
+          </div>
+
 
           {/* RECOVERY INFORMATION */}
 
