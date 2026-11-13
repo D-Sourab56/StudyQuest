@@ -435,9 +435,14 @@ export function PrivateAccountPanel() {
               Your Account QR Code
             </h3>
 
-            <p className="page-description">
-              Use your permanent QR code to sign in
-              to StudyQuest on another device.
+            <p
+              style={{
+                width: "100%",
+                textAlign: "center",
+                margin: "16px auto",
+              }}
+            >
+              Use your permanent QR code to sign in to StudyQuest on another device.
             </p>
 
             <button
@@ -473,15 +478,29 @@ export function PrivateAccountPanel() {
                   }}
                 />
 
-                <p
-                  className="page-description"
+                <a
+                  href={qrImage}
+                  download="StudyQuest-Account-QR.png"
+                  className="secondary-button"
                   style={{
-                    marginTop: 12,
-                    fontSize: 12,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 16,
+                    textDecoration: "none",
                   }}
                 >
-                  Keep this code private. Anyone with
-                  a copy can access your account.
+                  Download QR Code
+                </a>
+
+                <p
+                  style={{
+                    width: "100%",
+                    textAlign: "center",
+                    margin: "20px auto 0",
+                  }}
+                >
+                  Keep this code private. Anyone with a copy can access your account.
                 </p>
               </div>
             )}
@@ -497,10 +516,14 @@ export function PrivateAccountPanel() {
               fontSize: 12,
             }}
           >
-            Full cloud synchronization and QR
-            account recovery are not available
-            yet. Keep your browser session
-            until account recovery is implemented.
+            Your subjects synchronize across authorized
+            devices when connected and refreshed.
+            Study sessions, summaries, achievements,
+            and settings remain stored in this browser.
+
+            Keep a secure backup of your permanent
+            QR code. Losing every copy may permanently
+            prevent access to your account.
           </p>
         </>
       ) : hasPrivateSession ? (
@@ -614,9 +637,10 @@ export function PrivateAccountPanel() {
             lineHeight: 1.7,
           }}
         >
-          Your account is authenticated using
-          Supabase. Secure cross-device QR
-          login will be added in a later step.
+          Your StudyQuest account supports permanent
+          QR-based login through Supabase.
+          Anyone with a copy of your QR code can
+          access your account. Never share it publicly.
         </p>
       </div>
     </section>
