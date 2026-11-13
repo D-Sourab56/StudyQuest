@@ -392,14 +392,32 @@ export function StorageScopeGate({
               setActionError(null);
               setIsQrSigningIn(true);
 
-              // Authenticate directly using
-              // the permanent QR credential.
               void loginWithAccountQr(qrPayload)
-                .then(() => {
-                  if (!cancelled) {
+                  .then((device) => {
+                    if (cancelled) {
+                      return;
+                    }
+
+                    // Save the verified permanent QR credential
+                    // for display on this authorized device.
+                    try {
+                      const storageKey =
+                        `studyquest:account-qr:v1:${device.accountId}`;
+
+                      localStorage.setItem(
+                        storageKey,
+                        qrPayload
+                      );
+                    } catch (storageError) {
+                      console.warn(
+                        "QR login succeeded, but the QR code " +
+                        "could not be saved on this device.",
+                        storageError
+                      );
+                    }
+
                     window.location.reload();
-                  }
-                })
+                  })
                 .catch((error: unknown) => {
                   if (cancelled) {
                     return;

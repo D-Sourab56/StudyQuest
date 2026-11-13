@@ -29,6 +29,7 @@ export function PrivateAccountPanel() {
     isLoading,
     isPrivateAccount,
     isQrAccount,
+    accountUserId,
   } = useAuth();
 
   const {
@@ -203,7 +204,11 @@ export function PrivateAccountPanel() {
   // =========================================
 
   async function handleShowAccountQr() {
-    if (!user || !isAnonymousAccount || isQrLoading) {
+    if (
+      !accountUserId ||
+      (!isAnonymousAccount && !isQrAccount) ||
+      isQrLoading
+    ) {
       return;
     }
 
@@ -218,7 +223,7 @@ export function PrivateAccountPanel() {
 
     try {
       const storageKey =
-        `studyquest:account-qr:v1:${user.id}`;
+        `studyquest:account-qr:v1:${accountUserId}`;
 
       let qrPayload = localStorage.getItem(storageKey);
 
@@ -226,6 +231,15 @@ export function PrivateAccountPanel() {
         !qrPayload ||
         !/^SQ1:[a-f0-9]{64}$/.test(qrPayload)
       ) {
+
+        if (isQrAccount) {
+            throw new Error(
+              "Your account is authenticated, but its " +
+              "permanent QR code is not saved on this device. " +
+              "Sign in again using your original QR code " +
+              "to save a copy here."
+            );
+          }
         const { data, error: functionError } =
           await supabase.functions.invoke<{
             created: boolean;
