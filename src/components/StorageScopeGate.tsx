@@ -41,6 +41,7 @@ import {
 
 import { restoreAccountAchievements } from "../services/achievementRestoreService";
 
+import { CloudReconnectSync } from "./CloudReconnectSync";
 // =========================================
 // CONSTANTS
 // =========================================
@@ -846,7 +847,7 @@ export function StorageScopeGate({
   // ACTIVATE STUDYQUEST
   // =========================================
 
-  return (
+    return (
     <StorageModeContext.Provider
       value={{
         mode: "private",
@@ -855,6 +856,8 @@ export function StorageScopeGate({
         selectPrivateMode,
       }}
     >
+      <CloudReconnectSync />
+
       {children}
     </StorageModeContext.Provider>
   );
