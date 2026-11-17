@@ -22,11 +22,24 @@ import { settingsService } from "../services/settingsService";
 import {
   restoreAccountSubjects,
 } from "../services/subjectRestoreService";
+import {
+  restoreAccountSessions,
+} from "../services/sessionRestoreService";
 
 import {
   supabase,
   loginWithAccountQr,
 } from "../lib/supabase";
+
+import {
+  restoreAccountSummaries,
+} from "../services/summaryRestoreService";
+
+import {
+  restoreAccountProfile,
+} from "../services/profileRestoreService";
+
+import { restoreAccountAchievements } from "../services/achievementRestoreService";
 
 // =========================================
 // CONSTANTS
@@ -158,47 +171,66 @@ export function StorageScopeGate({
         // Optional preference storage.
       }
 
-      // Restore cloud subjects only in the
-      // isolated QR testing environment.
-      if (import.meta.env.MODE !== "qr") {
+            // =====================================
+      // RESTORE CLOUD ACCOUNT DATA
+      // =====================================
+
+      const isCancelled = () =>
+        cancelled || restoreTimedOut;
+
+      restoreTimeout = window.setTimeout(() => {
+        restoreTimedOut = true;
+
+        console.warn(
+          "Cloud restoration timed out. " +
+          "Continuing with locally available data."
+        );
+
         reportResult(null);
-      } else {
-        // Never block local-first StudyQuest
-        // indefinitely because of a network issue.
-        restoreTimeout = window.setTimeout(() => {
-          restoreTimedOut = true;
+      }, 20000);
 
-          console.warn(
-            "Cloud subject restoration timed out. " +
-            "Continuing with local subjects."
-          );
-
-          reportResult(null);
-        }, 8000);
-
-        void restoreAccountSubjects(
-          accountUserId,
-          () => cancelled || restoreTimedOut
-        )
-          .catch((error: unknown) => {
-            if (!cancelled && !restoreTimedOut) {
+      // Restore both collections before
+      // mounting the StudyQuest pages.
+      void Promise.allSettled([
+        restoreAccountSubjects(accountUserId, isCancelled),
+        restoreAccountSessions(accountUserId, isCancelled),
+        restoreAccountSummaries(accountUserId, isCancelled),
+        restoreAccountAchievements(accountUserId, isCancelled),
+        restoreAccountProfile(accountUserId, isCancelled),
+      ])
+        .then((results) => {
+        const collections = [
+          "subjects",
+          "sessions",
+          "summaries",
+          "achievements",
+          "settings",
+        ];
+          results.forEach((result, index) => {
+            if (
+              result.status === "rejected" &&
+              !cancelled &&
+              !restoreTimedOut
+            ) {
               console.warn(
-                "Could not restore cloud subjects. " +
+                `Could not restore cloud ${collections[index]}. ` +
                 "Existing local data was preserved.",
-                error
+                result.reason
               );
             }
-          })
-          .finally(() => {
-            if (restoreTimeout !== null) {
-              window.clearTimeout(restoreTimeout);
-            }
-
-            if (!restoreTimedOut) {
-              reportResult(null);
-            }
           });
-      }
+        })
+        .finally(() => {
+          if (restoreTimeout !== null) {
+            window.clearTimeout(
+              restoreTimeout
+            );
+          }
+
+          if (!restoreTimedOut) {
+            reportResult(null);
+          }
+        });
     } catch (error) {
       console.error(
         "StudyQuest account storage failed:",

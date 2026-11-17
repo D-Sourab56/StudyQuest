@@ -39,6 +39,61 @@ export async function restoreAccountSubjects(
     subjectSyncQueueService.getPendingOperations(
       userId
     );
+    // =========================================
+    // UPLOAD EXISTING LOCAL-ONLY SUBJECTS
+    // =========================================
+
+    // Include active and deleted cloud records.
+    // This prevents restoring subjects that
+    // were already deleted on another device.
+    const knownCloudIds = new Set([
+      ...cloud.subjects.map(
+        (subject) => subject.id
+      ),
+      ...cloud.deletedSubjectIds,
+    ]);
+
+    // Pending operations already contain
+    // changes waiting to be uploaded.
+    const pendingSubjectIds = new Set(
+      pendingOperations.map(
+        (operation) => operation.subjectId
+      )
+    );
+
+    let queuedExistingSubjects = 0;
+
+    for (const subject of localSubjects) {
+      // Do not overwrite existing cloud
+      // records or recreate deleted subjects.
+      if (
+        knownCloudIds.has(subject.id) ||
+        pendingSubjectIds.has(subject.id)
+      ) {
+        continue;
+      }
+
+      subjectSyncQueueService.enqueueSubjectSave(
+        userId,
+        subject
+      );
+
+      queuedExistingSubjects += 1;
+    }
+
+    // Upload missing subjects using the
+    // existing reliable synchronization queue.
+    if (queuedExistingSubjects > 0) {
+      void subjectSyncQueueService
+        .processPendingOperations(userId)
+        .catch((error: unknown) => {
+          console.warn(
+            "Could not upload existing subjects. " +
+            "They remain queued for synchronization.",
+            error
+          );
+        });
+    }
 
   // Start with locally stored subjects.
   const mergedSubjects =

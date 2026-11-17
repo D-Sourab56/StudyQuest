@@ -30,7 +30,7 @@ interface CloudSubjectRow {
 // =========================================
 
 
-async function requirePrivateAccount(
+export async function requirePrivateAccount(
   expectedUserId?: string
 ): Promise<{
   userId: string;

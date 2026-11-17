@@ -1,4 +1,6 @@
-
+import {
+  uploadCloudAchievementUnlocks,
+} from "./achievementCloudService";
 // =========================================
 // TYPES
 // =========================================
@@ -138,7 +140,8 @@ function unlockAchievement(
 
   const existingUnlocks = getUnlocks();
 
-  // Never replace an existing unlock date.
+  // Never replace an existing
+  // achievement's original unlock date.
   if (
     existingUnlocks.some(
       (unlock) =>
@@ -148,27 +151,54 @@ function unlockAchievement(
     return true;
   }
 
+  const newUnlock: AchievementUnlock = {
+    achievementId: id,
+    unlockedAt: new Date().toISOString(),
+  };
+
   const updatedUnlocks = [
     ...existingUnlocks,
-    {
-      achievementId: id,
-      unlockedAt: new Date().toISOString(),
-    },
+    newUnlock,
   ];
 
   try {
     const key = getStorageKey();
 
+    // Always save locally first.
     localStorage.setItem(
       key,
       JSON.stringify(updatedUnlocks)
     );
 
-    return localStorage.getItem(key) !== null &&
+    const saved =
+      localStorage.getItem(key) !== null &&
       getUnlocks().some(
         (unlock) =>
           unlock.achievementId === id
       );
+
+    if (!saved) {
+      return false;
+    }
+
+    // Upload to the authenticated account.
+    const accountId = currentScope?.userId;
+
+    if (accountId) {
+      void uploadCloudAchievementUnlocks(
+        [newUnlock],
+        accountId
+      ).catch((error: unknown) => {
+        console.warn(
+          "Could not upload achievement. " +
+          "The permanent local unlock was preserved. " +
+          "Synchronization will retry on account reload.",
+          error
+        );
+      });
+    }
+
+    return true;
   } catch (error) {
     console.error(
       "Could not save achievement unlock:",
@@ -178,7 +208,115 @@ function unlockAchievement(
     return false;
   }
 }
+// =========================================
+// MERGE CLOUD ACHIEVEMENT UNLOCKS
+// =========================================
 
+function mergeCloudUnlocks(
+  cloudUnlocks: AchievementUnlock[]
+): void {
+  if (cloudUnlocks.length === 0) {
+    return;
+  }
+
+  const key = getStorageKey();
+
+  // Refuse to overwrite malformed local
+  // achievement data.
+  const raw = localStorage.getItem(key);
+
+  const parsed: unknown =
+    raw === null
+      ? []
+      : JSON.parse(raw);
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(
+      "Invalid local achievement storage. " +
+      "Existing data was preserved."
+    );
+  }
+
+  const localUnlocks = getUnlocks();
+
+  // If normalization discarded records,
+  // preserve the original data for review.
+  if (
+    parsed.length !== localUnlocks.length
+  ) {
+    throw new Error(
+      "Local achievement records require review. " +
+      "Existing data was preserved."
+    );
+  }
+
+  const merged = new Map<
+    string,
+    AchievementUnlock
+  >();
+
+  for (const unlock of localUnlocks) {
+    merged.set(
+      unlock.achievementId,
+      unlock
+    );
+  }
+
+  for (const unlock of cloudUnlocks) {
+    if (
+      !unlock ||
+      typeof unlock.achievementId !==
+        "string" ||
+      !unlock.achievementId.trim() ||
+      typeof unlock.unlockedAt !==
+        "string" ||
+      Number.isNaN(
+        Date.parse(unlock.unlockedAt)
+      )
+    ) {
+      throw new Error(
+        "Invalid cloud achievement record."
+      );
+    }
+
+    const existing =
+      merged.get(unlock.achievementId);
+
+    // Add missing achievements.
+    // If both devices have the same unlock,
+    // preserve the earliest earned date.
+    if (
+      !existing ||
+      Date.parse(unlock.unlockedAt) <
+        Date.parse(existing.unlockedAt)
+    ) {
+      merged.set(
+        unlock.achievementId,
+        {
+          achievementId:
+            unlock.achievementId,
+          unlockedAt:
+            unlock.unlockedAt,
+        }
+      );
+    }
+  }
+
+  const restoredUnlocks =
+    Array.from(merged.values());
+
+  if (
+    JSON.stringify(localUnlocks) ===
+    JSON.stringify(restoredUnlocks)
+  ) {
+    return;
+  }
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(restoredUnlocks)
+  );
+}
 // =========================================
 // CHECK UNLOCK STATUS
 // =========================================
@@ -200,5 +338,6 @@ export const achievementStorageService = {
   useAccountAchievements,
   getUnlocks,
   unlockAchievement,
+  mergeCloudUnlocks,
   isUnlocked,
 };

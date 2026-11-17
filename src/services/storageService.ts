@@ -5,6 +5,12 @@ import type { StudySession } from "../types/session";
 import type { StudySubject } from "../types/subject";
 import type { StudySummary } from "../types/summary";
 import type { ActiveStudyTimer } from "../types/timer";
+import {
+  uploadCloudSessions,
+} from "./sessionCloudService";
+import {
+  summarySyncQueueService,
+} from "./summarySyncQueueService";
 
 // =========================================
 // TYPES
@@ -413,6 +419,7 @@ function addSession(
 ): void {
   const currentData = readData();
 
+  // Always save locally first.
   saveData({
     ...currentData,
 
@@ -421,6 +428,83 @@ function addSession(
       session,
     ],
   });
+
+  // Upload the new session to the
+  // currently authenticated account.
+  const accountId = currentScope?.userId;
+
+  if (!accountId) {
+    return;
+  }
+
+  void uploadCloudSessions(
+    [session],
+    accountId
+  ).catch((error: unknown) => {
+    // A failed upload must never cause
+    // the local session to disappear.
+    //
+    // Session restoration will retry
+    // missing uploads on the next load.
+    console.warn(
+      "Could not upload the new study session. " +
+      "It remains saved locally and will " +
+      "be retried when StudyQuest reloads.",
+      error
+    );
+  });
+}
+
+// =========================================
+// QUEUE SUMMARY CLOUD CHANGES
+// =========================================
+
+function queueSummaryChange(
+  change:
+    | {
+        type: "save";
+        summary: StudySummary;
+      }
+    | {
+        type: "delete";
+        summaryId: string;
+      }
+): void {
+  const accountId = currentScope?.userId;
+
+  if (!accountId) {
+    return;
+  }
+
+  try {
+    if (change.type === "save") {
+      summarySyncQueueService.enqueueSummarySave(
+        accountId,
+        change.summary
+      );
+    } else {
+      summarySyncQueueService.enqueueSummaryDelete(
+        accountId,
+        change.summaryId
+      );
+    }
+
+    void summarySyncQueueService
+      .processPendingOperations(accountId)
+      .catch((error: unknown) => {
+        console.warn(
+          "Summary synchronization failed. " +
+          "Pending changes remain stored locally.",
+          error
+        );
+      });
+  } catch (error) {
+    console.warn(
+      "Could not queue summary synchronization. " +
+      "The local summary was preserved.",
+      error
+    );
+  }
 }
 
 // =========================================
@@ -451,6 +535,7 @@ function addSummary(
 ): void {
   const currentData = readData();
 
+  // Save locally first.
   saveData({
     ...currentData,
 
@@ -459,8 +544,13 @@ function addSummary(
       summary,
     ],
   });
-}
 
+  // Upload in the background.
+  queueSummaryChange({
+    type: "save",
+    summary,
+  });
+}
 // =========================================
 // UPDATE SUMMARY
 // =========================================
@@ -508,15 +598,23 @@ function updateSummary(
     summaries: updatedSummaries,
   });
 
-  const savedSummary =
-    getSummaries().find(
-      (summary) => summary.id === summaryId
-    );
+    const savedSummary =
+        getSummaries().find(
+          (summary) => summary.id === summaryId
+        );
 
-  return (
-    savedSummary?.topic === topic &&
-    savedSummary?.content === content
-  );
+      const wasSaved =
+        savedSummary?.topic === topic &&
+        savedSummary?.content === content;
+
+      if (wasSaved && savedSummary) {
+        queueSummaryChange({
+          type: "save",
+          summary: savedSummary,
+        });
+      }
+
+      return wasSaved;
 }
 
 // =========================================
@@ -534,10 +632,16 @@ function deleteSummary(
         summary.id !== summaryId
     );
 
+  // Delete from local storage first.
   saveData({
     ...currentData,
-
     summaries: updatedSummaries,
+  });
+
+  // Queue the corresponding cloud deletion.
+  queueSummaryChange({
+    type: "delete",
+    summaryId,
   });
 }
 
